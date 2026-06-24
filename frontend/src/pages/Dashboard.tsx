@@ -1,3 +1,7 @@
+/* Dashboard.tsx renders (produce & displays output) the application's main summary view.
+ * - displays total balance, monthly income, and spending overview cards.
+ * - used as the landing page route in the app router.
+ */
 export default function Dashboard() {
   return (
     <div className="p-8">

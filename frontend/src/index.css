@@ -1,1 +1,4 @@
+/* index.css holds base global styles and imports for Tailwind.
+ * - included by `main.tsx` to provide global CSS and resets.
+ */
 @import "tailwindcss";

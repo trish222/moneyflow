@@ -1,3 +1,6 @@
+/* App.css contains component-specific styles used by the React App.
+ * - holds utility and component classes (e.g., .counter, .hero) used across the UI.
+ */
 .counter {
   font-size: 16px;
   padding: 5px 10px;
@@ -167,7 +170,7 @@
 
   &::before,
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -4.5px;
     border: 5px solid transparent;

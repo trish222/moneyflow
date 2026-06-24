@@ -1,3 +1,7 @@
+/* Transactions.tsx provides the transactions list UI.
+ * - shows a table of user transactions and related controls for managing them.
+ * - rendered at the `/transactions` route.
+ */
 export default function Transactions() {
   return (
     <div className="p-8">

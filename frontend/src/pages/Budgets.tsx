@@ -1,3 +1,7 @@
+/* Budgets.tsx manages and displays budget categories and progress.
+ * - renders (produce & displays output) budget cards and progress bars for each category.
+ * - rendered at the `/budgets` route.
+ */
 export default function Budgets() {
   return (
     <div className="p-8">
