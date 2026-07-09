@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
+import Savings from "./pages/Savings";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
                     Dashboard
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     to="/transactions"
@@ -33,12 +35,22 @@ function App() {
                     Transactions
                   </Link>
                 </li>
+
                 <li>
                   <Link
                     to="/budgets"
                     className="text-gray-700 hover:text-purple-600 font-medium"
                   >
                     Budgets
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    to="/savings"
+                    className="text-gray-700 hover:text-purple-600 font-medium"
+                  >
+                    Savings
                   </Link>
                 </li>
               </ul>
@@ -52,6 +64,7 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/budgets" element={<Budgets />} />
+            <Route path="/savings" element={<Savings />} />
           </Routes>
         </div>
       </div>

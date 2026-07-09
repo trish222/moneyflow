@@ -7,8 +7,71 @@ datasource db {
 }
 
 model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  name          String?
+  createdAt     DateTime       @default(now())
+  accounts      Account[]
+  transactions  Transaction[]
+  investments   Investment[]
+  debts         Debt[]
+  savingsGoals  SavingsGoal[]
+}
+
+model Account {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  balance   Float    @default(0)
+  type      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Float
+  type      String
+  category  String
+  date      DateTime
+  createdAt DateTime @default(now())
+}
+
+model Investment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  value     Float
+  type      String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Debt {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  amount    Float
+  type      String
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SavingsGoal {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  targetAmount Float
+  currentAmount Float @default(0)
+  date      DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
