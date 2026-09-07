@@ -1,6 +1,6 @@
 /* App.tsx is the interactive React UI
  * - it renders into the root element provided by index.html and updates the DOM when the state changes.
- * - it uses React Router to navigate between pages (Dashboard, Transactions, Budgets).
+ * - it uses React Router to decide which page to display (Dashboard, Transactions, Budgets).
  */
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";

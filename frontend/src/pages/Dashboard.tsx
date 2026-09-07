@@ -27,7 +27,7 @@ export default function Dashboard() {
   // Used to show "Loading..." message while waiting for data
   const [loading, setLoading] = useState(true);
 
-  // State to track which filter type is selected: "all", "year", or "month"
+  // State to track which filter type is selected: "all", "year", "month", or "day"
   // Default is "all" to show all-time data
   const [filterType, setFilterType] = useState("all");
 
