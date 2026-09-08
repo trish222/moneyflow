@@ -81,52 +81,59 @@ export default function Budgets() {
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl font-bold text-purple-600">Budgets</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
-        >
-          {showForm ? "Cancel" : "Add Budget"}
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-white">Budgets</h1>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+          >
+            {showForm ? "Cancel" : "+ Add Budget"}
+          </button>
+        </div>
 
-      <div className="flex gap-4 mb-6">
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          className="px-4 py-2 border border-gray-300 rounded-lg"
-        >
-          {months.map((m, i) => (
-            <option key={m} value={i + 1}>
-              {m}
-            </option>
-          ))}
-        </select>
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="px-4 py-2 border border-gray-300 rounded-lg"
-        >
-          {years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
-      </div>
+        <div className="flex gap-4 mb-8">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium"
+          >
+            {months.map((m, i) => (
+              <option key={m} value={i + 1}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {showForm && (
-        <div className="bg-white p-6 rounded-lg shadow mb-6">
-          <form onSubmit={handleAddBudget} className="space-y-4">
+        {showForm && (
+          <form
+            onSubmit={handleAddBudget}
+            className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-6 mb-8 space-y-4"
+          >
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Category</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Category
+                </label>
                 <select
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
                 >
                   {categories.map((c) => (
                     <option key={c} value={c}>
@@ -136,73 +143,104 @@ export default function Budgets() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold mb-2">Monthly Limit</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Budget Limit
+                </label>
                 <input
                   type="number"
                   step="0.01"
                   required
                   value={formData.limit}
-                  onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  onChange={(e) =>
+                    setFormData({ ...formData, limit: e.target.value })
+                  }
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                  placeholder="0.00"
                 />
               </div>
             </div>
             <button
               type="submit"
-              className="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
             >
               Add Budget
             </button>
           </form>
-        </div>
-      )}
+        )}
 
-      {loading ? (
-        <p className="text-center py-8 text-gray-500">Loading budgets...</p>
-      ) : budgets.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8">
-          <p className="text-center text-gray-500">No budgets set for this month</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {budgets.map((budget) => {
-            const percentage = (budget.spent / budget.limit) * 100;
-            const isOverBudget = budget.spent > budget.limit;
-            return (
-              <div key={budget.id} className="bg-white p-6 rounded-lg shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-700 capitalize">
-                      {budget.category}
-                    </h2>
-                    <p className={`text-sm ${isOverBudget ? "text-red-600" : "text-gray-600"}`}>
-                      ${budget.spent.toFixed(2)} / ${budget.limit.toFixed(2)}
-                    </p>
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-400">Loading budgets...</p>
+          </div>
+        ) : budgets.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-400">No budgets set for this month</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {budgets.map((budget) => {
+              const percentage = (budget.spent / budget.limit) * 100;
+              let barColor = "bg-blue-500";
+              let statusColor = "text-blue-400";
+
+              if (percentage > 100) {
+                barColor = "bg-red-500";
+                statusColor = "text-red-400";
+              } else if (percentage > 75) {
+                barColor = "bg-yellow-500";
+                statusColor = "text-yellow-400";
+              }
+
+              return (
+                <div
+                  key={budget.id}
+                  className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-6 hover:shadow-lg hover:shadow-purple-500/20 transition"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white capitalize">
+                        {budget.category}
+                      </h3>
+                      <p className="text-sm text-gray-400">
+                        {months[selectedMonth - 1]} {selectedYear}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteBudget(budget.id)}
+                      className="text-red-400 hover:text-red-300 transition text-lg"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteBudget(budget.id)}
-                    className="text-red-600 hover:text-red-800"
-                  >
-                    ×
-                  </button>
+
+                  <div className="mb-4">
+                    <div className="flex justify-between mb-2">
+                      <span className={`text-sm font-medium ${statusColor}`}>
+                        {percentage.toFixed(0)}% used
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        ${budget.spent.toFixed(2)} / ${budget.limit.toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-3">
+                      <div
+                        className={`${barColor} h-3 rounded-full transition-all`}
+                        style={{ width: `${Math.min(percentage, 100)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {percentage > 100 && (
+                    <p className="text-red-400 text-sm">
+                      Over budget by ${(budget.spent - budget.limit).toFixed(2)}
+                    </p>
+                  )}
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full transition-all ${
-                      isOverBudget
-                        ? "bg-red-600"
-                        : percentage > 75
-                        ? "bg-yellow-600"
-                        : "bg-blue-600"
-                    }`}
-                    style={{ width: `${Math.min(percentage, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

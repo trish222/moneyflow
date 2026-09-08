@@ -11,17 +11,19 @@ import Savings from "./pages/Savings";
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         {/* Navigation Bar */}
-        <nav className="bg-white shadow">
-          <div className="max-w-7xl mx-auto px-4 py-4">
+        <nav className="bg-slate-900/80 backdrop-blur border-b border-purple-500/20">
+          <div className="max-w-7xl mx-auto px-8 py-4">
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-purple-600">MoneyFlow</h1>
-              <ul className="flex gap-6">
+              <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+                MoneyFlow
+              </Link>
+              <ul className="flex gap-8">
                 <li>
                   <Link
                     to="/"
-                    className="text-gray-700 hover:text-purple-600 font-medium"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition"
                   >
                     Dashboard
                   </Link>
@@ -30,7 +32,7 @@ function App() {
                 <li>
                   <Link
                     to="/transactions"
-                    className="text-gray-700 hover:text-purple-600 font-medium"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition"
                   >
                     Transactions
                   </Link>
@@ -39,7 +41,7 @@ function App() {
                 <li>
                   <Link
                     to="/budgets"
-                    className="text-gray-700 hover:text-purple-600 font-medium"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition"
                   >
                     Budgets
                   </Link>
@@ -48,18 +50,30 @@ function App() {
                 <li>
                   <Link
                     to="/savings"
-                    className="text-gray-700 hover:text-purple-600 font-medium"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition"
                   >
                     Savings
                   </Link>
                 </li>
               </ul>
+
+              <div className="flex gap-4 items-center">
+                <button className="text-gray-300 hover:text-purple-400 transition">
+                  🌙
+                </button>
+                <button className="text-gray-300 hover:text-purple-400 transition">
+                  ⚙️
+                </button>
+                <button className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center hover:bg-purple-700 transition">
+                  👤
+                </button>
+              </div>
             </div>
           </div>
         </nav>
 
         {/* Page Content */}
-        <div className="max-w-7xl mx-auto">
+        <div>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
