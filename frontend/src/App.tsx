@@ -7,6 +7,8 @@ import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
 import Savings from "./pages/Savings";
+import Investments from "./pages/Investments";
+import Debt from "./pages/Debt";
 
 function App() {
   return (
@@ -14,12 +16,13 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         {/* Navigation Bar */}
         <nav className="bg-slate-900/80 backdrop-blur border-b border-purple-500/20">
-          <div className="max-w-7xl mx-auto px-8 py-4">
-            <div className="flex items-center justify-between">
-              <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+          <div className="w-full px-4 md:px-8 py-4">
+            <div className="flex items-center justify-between gap-8">
+              <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent flex-shrink-0">
                 MoneyFlow
               </Link>
-              <ul className="flex gap-8">
+
+              <ul className="flex gap-6 md:gap-10 flex-wrap justify-center flex-1">
                 <li>
                   <Link
                     to="/"
@@ -49,6 +52,24 @@ function App() {
 
                 <li>
                   <Link
+                    to="/investments"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition"
+                  >
+                    Investments
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
+                    to="/debt"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition"
+                  >
+                    Debt
+                  </Link>
+                </li>
+
+                <li>
+                  <Link
                     to="/savings"
                     className="text-gray-300 hover:text-purple-400 font-medium transition"
                   >
@@ -57,7 +78,7 @@ function App() {
                 </li>
               </ul>
 
-              <div className="flex gap-4 items-center">
+              <div className="flex gap-4 items-center flex-shrink-0">
                 <button className="text-gray-300 hover:text-purple-400 transition">
                   🌙
                 </button>
@@ -78,6 +99,8 @@ function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />
             <Route path="/budgets" element={<Budgets />} />
+            <Route path="/investments" element={<Investments />} />
+            <Route path="/debt" element={<Debt />} />
             <Route path="/savings" element={<Savings />} />
           </Routes>
         </div>

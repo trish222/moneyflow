@@ -20,3 +20,6 @@ npm-debug.log*
 
 # Prisma
 prisma/migrations/dev.db
+
+# Session documentation
+MONEY_FLOW_SESSION_HANDOFF.md

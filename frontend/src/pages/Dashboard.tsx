@@ -188,6 +188,13 @@ export default function Dashboard() {
           --glow-color-dim: rgba(0, 180, 255, 0.2);
         }
 
+        .glow-green {
+          --color-1: #00d97e;
+          --color-2: #00a86b;
+          --glow-color: rgba(0, 217, 126, 0.8);
+          --glow-color-dim: rgba(0, 217, 126, 0.2);
+        }
+
         .toggle-switch {
           position: relative;
           display: inline-flex;
@@ -217,21 +224,209 @@ export default function Dashboard() {
         .toggle-switch.active::after {
           left: 24px;
         }
+
+        /* Masonry Staggered Layout */
+        .dashboard-layout {
+          display: grid;
+          grid-template-columns: 1fr 2fr;
+          gap: 2rem;
+          align-items: start;
+        }
+
+        /* Left column - metric cards */
+        .metrics-column {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .metric-card {
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+
+
+        /* Right column - large cards grid */
+        .cards-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 2rem;
+          grid-auto-rows: max-content;
+        }
+
+        @media (max-width: 1024px) {
+          .dashboard-layout {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+
+          .cards-grid {
+            grid-template-columns: 1fr;
+          }
+        }
       `}</style>
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Welcome, Trish</h1>
-        <p className="text-purple-300">Financial Snapshot</p>
+      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Welcome, Trish</h1>
+          <p className="text-purple-300">Financial Snapshot</p>
+        </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left Sidebar - Small Metric Cards */}
-        <div className="w-full lg:w-1/4 space-y-6">
+      {/* Activity Summary - Horizontal Bar */}
+      <div className="mb-8 flex flex-wrap justify-end gap-2">
+        <h3 className="w-full text-right text-white font-semibold text-sm mb-2">Activity Summary</h3>
+        <button
+          onClick={() => setFilterType("day")}
+          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            filterType === "day"
+              ? "border-purple-400 bg-purple-500/20 text-purple-300"
+              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          }`}
+        >
+          Day
+        </button>
+
+        <button
+          onClick={() => setFilterType("week")}
+          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            filterType === "week"
+              ? "border-purple-400 bg-purple-500/20 text-purple-300"
+              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          }`}
+        >
+          Week
+        </button>
+
+        <button
+          onClick={() => setFilterType("month")}
+          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            filterType === "month"
+              ? "border-purple-400 bg-purple-500/20 text-purple-300"
+              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          }`}
+        >
+          Month
+        </button>
+
+        <button
+          onClick={() => setFilterType("year")}
+          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            filterType === "year"
+              ? "border-purple-400 bg-purple-500/20 text-purple-300"
+              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          }`}
+        >
+          Year
+        </button>
+
+        <button
+          onClick={() => setFilterType("all")}
+          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            filterType === "all"
+              ? "border-purple-400 bg-purple-500/20 text-purple-300"
+              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          }`}
+        >
+          All Time
+        </button>
+      </div>
+
+      {/* Selectors for Filters */}
+      {(filterType === "day" || filterType === "week") && (
+        <div className="mb-6 flex flex-wrap gap-3 justify-end">
+          <select
+            value={selectedDay}
+            onChange={(e) => setSelectedDay(Number(e.target.value))}
+            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
+          >
+            {Array.from({ length: 31 }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+          {filterType === "week" && (
+            <>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
+              >
+                {months.map((month, index) => (
+                  <option key={month} value={index + 1}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
+              >
+                {years.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+        </div>
+      )}
+
+      {filterType === "month" && (
+        <div className="mb-6 flex flex-wrap gap-3 justify-end">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
+          >
+            {months.map((month, index) => (
+              <option key={month} value={index + 1}>
+                {month}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
+          >
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {filterType === "year" && (
+        <div className="mb-6 flex flex-wrap gap-3 justify-end">
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
+          >
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* Main Content - Masonry Staggered Layout */}
+      <div className="dashboard-layout">
+        {/* Left Column - Metric Cards */}
+        <div className="metrics-column">
           {/* Net Worth Card */}
           <div className="glow-card glow-red">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-white font-semibold">Net Worth</h3>
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-white font-semibold text-lg">Net Worth</h3>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-red-300">Include Debt</span>
                 <div
@@ -240,349 +435,170 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-            <p className="text-2xl md:text-3xl font-bold text-red-300">
+            <p className="text-5xl md:text-6xl font-bold text-red-300 mb-4">
               ${displayNetWorth.toFixed(2)}
             </p>
-            <p className="text-xs text-gray-400 mt-2">↑ 0.05%</p>
+            <p className="text-xs text-gray-400">↑ 0.05%</p>
           </div>
 
-          {/* Investments Card */}
+          {/* Available Funds Card */}
           <div className="glow-card glow-cyan">
-            <h3 className="text-white font-semibold mb-4">Investments Value</h3>
-            <div className="flex justify-center">
-              <div className="relative w-20 h-20 md:w-24 md:h-24">
-                <svg className="w-full h-full" viewBox="0 0 100 100">
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="#1e293b"
-                    strokeWidth="8"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="#00d9ff"
-                    strokeWidth="8"
-                    strokeDasharray="141 283"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-sm md:text-lg font-bold text-cyan-300">
-                      ${metrics.investmentsValue.toFixed(0)}
-                    </p>
-                    <p className="text-xs text-gray-400">invested</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h3 className="text-white font-semibold mb-3">Available Funds</h3>
+            <p className="text-3xl font-bold text-cyan-300">
+              ${metrics.availableFunds.toFixed(2)}
+            </p>
           </div>
 
           {/* Savings Card */}
           <div className="glow-card glow-blue">
-            <h3 className="text-white font-semibold mb-4">Savings</h3>
-            <p className="text-2xl md:text-3xl font-bold text-blue-300">
+            <h3 className="text-white font-semibold mb-3">Savings</h3>
+            <p className="text-3xl font-bold text-blue-300">
               ${metrics.savings.toFixed(2)}
             </p>
           </div>
 
           {/* Debt Card */}
           <div className="glow-card glow-purple">
-            <h3 className="text-white font-semibold mb-4">Debt</h3>
-            <p className="text-2xl md:text-3xl font-bold text-purple-300">
+            <h3 className="text-white font-semibold mb-3">Debt</h3>
+            <p className="text-3xl font-bold text-purple-300">
               ${metrics.debts.toFixed(2)}
             </p>
           </div>
         </div>
 
-        {/* Middle Section - Main Cards */}
-        <div className="w-full lg:flex-1 space-y-6">
-          {/* Transactions Card */}
-          <div
-            onClick={() => navigate("/transactions")}
-            className="glow-card glow-cyan cursor-pointer group"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-white">Transactions</h2>
-              <svg
-                className="w-6 h-6 text-cyan-400 group-hover:translate-x-1 transition"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-
-            <div className="space-y-4">
-              <div className="border-l-4 border-green-400 pl-4 py-2">
-                <p className="text-gray-400 text-sm">Income</p>
-                <p className="text-lg md:text-xl font-bold text-green-400">
-                  +${totalIncome.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">this month</p>
+        {/* Right Column - Page Cards */}
+        <div>
+          <div className="cards-grid">
+            {/* Transactions Card */}
+            <div
+              onClick={() => navigate("/transactions")}
+              className="glow-card glow-cyan cursor-pointer group"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Transactions</h2>
+                <svg
+                  className="w-6 h-6 text-cyan-400 group-hover:translate-x-1 transition"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
               </div>
 
-              <div className="border-l-4 border-red-400 pl-4 py-2">
-                <p className="text-gray-400 text-sm">Expense</p>
-                <p className="text-lg md:text-xl font-bold text-red-400">
-                  -${totalExpense.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">this month</p>
-              </div>
-            </div>
+              <div className="space-y-4">
+                <div className="border-l-4 border-green-400 pl-4 py-2">
+                  <p className="text-gray-400 text-sm">Income</p>
+                  <p className="text-lg font-bold text-green-400">
+                    +${totalIncome.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500">this month</p>
+                </div>
 
-            {transactions.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-slate-700">
-                <p className="text-xs text-gray-500 mb-3">Recent transactions:</p>
-                <div className="space-y-2 max-h-32 overflow-y-auto">
-                  {transactions.slice(0, 3).map((t) => (
-                    <div
-                      key={t.id}
-                      className="flex justify-between text-sm text-gray-300"
-                    >
-                      <span>{t.category}</span>
-                      <span
-                        className={
-                          t.type === "income"
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }
-                      >
-                        {t.type === "income" ? "+" : "-"}${t.amount}
-                      </span>
-                    </div>
-                  ))}
+                <div className="border-l-4 border-red-400 pl-4 py-2">
+                  <p className="text-gray-400 text-sm">Expense</p>
+                  <p className="text-lg font-bold text-red-400">
+                    -${totalExpense.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500">this month</p>
                 </div>
               </div>
-            )}
-          </div>
-
-          {/* Budgeting Card */}
-          <div
-            onClick={() => navigate("/budgets")}
-            className="glow-card glow-purple cursor-pointer group"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-white">Budgeting</h2>
-              <p className="text-sm text-purple-300">monthly</p>
-              <svg
-                className="w-6 h-6 text-purple-400 group-hover:translate-x-1 transition"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
             </div>
 
-            {budgets.length > 0 ? (
-              <div className="space-y-4">
-                {budgets.map((budget) => {
-                  const percentage = (budget.spent / budget.limit) * 100;
-                  let barColor = "bg-blue-500";
-                  if (percentage > 100) barColor = "bg-red-500";
-                  else if (percentage > 75) barColor = "bg-yellow-500";
-
-                  return (
-                    <div key={budget.id}>
-                      <div className="flex justify-between mb-2">
-                        <span className="text-gray-300 capitalize">
-                          {budget.category}
-                        </span>
-                        <span className="text-sm text-gray-400">
-                          ${budget.spent.toFixed(2)} / ${budget.limit.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-700 rounded-full h-2">
-                        <div
-                          className={`${barColor} h-2 rounded-full transition-all`}
-                          style={{ width: `${Math.min(percentage, 100)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
+            {/* Budgeting Card */}
+            <div
+              onClick={() => navigate("/budgets")}
+              className="glow-card glow-purple cursor-pointer group"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Budgeting</h2>
+                <svg
+                  className="w-6 h-6 text-purple-400 group-hover:translate-x-1 transition"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
               </div>
-            ) : (
-              <p className="text-gray-400">No budgets set yet</p>
-            )}
+
+              {budgets.length > 0 ? (
+                <div className="space-y-4">
+                  {budgets.slice(0, 2).map((budget) => {
+                    const percentage = (budget.spent / budget.limit) * 100;
+                    let barColor = "bg-blue-500";
+                    if (percentage > 100) barColor = "bg-red-500";
+                    else if (percentage > 75) barColor = "bg-yellow-500";
+
+                    return (
+                      <div key={budget.id}>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-gray-300 capitalize text-sm">
+                            {budget.category}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            ${budget.spent.toFixed(0)} / ${budget.limit.toFixed(0)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-2">
+                          <div
+                            className={`${barColor} h-2 rounded-full transition-all`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">No budgets set yet</p>
+              )}
+            </div>
+
+            {/* Investments Card */}
+            <div
+              onClick={() => navigate("/investments")}
+              className="glow-card glow-green cursor-pointer group"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Investments</h2>
+                <svg
+                  className="w-6 h-6 text-green-400 group-hover:translate-x-1 transition"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </div>
+
+              <div className="space-y-3">
+                <div className="border-l-4 border-green-400 pl-4 py-2">
+                  <p className="text-gray-400 text-sm">Total Invested</p>
+                  <p className="text-2xl font-bold text-green-300">
+                    ${metrics.investmentsValue.toFixed(2)}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-400">View detailed portfolio breakdown</p>
+              </div>
+            </div>
+
           </div>
-        </div>
-
-        {/* Right Sidebar - Filters */}
-        <div className="w-full md:w-56 lg:w-48">
-          <h3 className="text-white font-semibold mb-4 text-center">
-            Activity Summary
-          </h3>
-
-          <div className="space-y-3 flex flex-col">
-            <button
-              onClick={() => setFilterType("day")}
-              className={`py-2 px-4 rounded-full border-2 font-medium transition ${
-                filterType === "day"
-                  ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                  : "border-slate-600 text-gray-300 hover:border-purple-400"
-              }`}
-            >
-              Day
-            </button>
-
-            <button
-              onClick={() => setFilterType("week")}
-              className={`py-2 px-4 rounded-full border-2 font-medium transition ${
-                filterType === "week"
-                  ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                  : "border-slate-600 text-gray-300 hover:border-purple-400"
-              }`}
-            >
-              Week
-            </button>
-
-            <button
-              onClick={() => setFilterType("month")}
-              className={`py-2 px-4 rounded-full border-2 font-medium transition ${
-                filterType === "month"
-                  ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                  : "border-slate-600 text-gray-300 hover:border-purple-400"
-              }`}
-            >
-              Month
-            </button>
-
-            <button
-              onClick={() => setFilterType("year")}
-              className={`py-2 px-4 rounded-full border-2 font-medium transition ${
-                filterType === "year"
-                  ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                  : "border-slate-600 text-gray-300 hover:border-purple-400"
-              }`}
-            >
-              Year
-            </button>
-
-            <button
-              onClick={() => setFilterType("all")}
-              className={`py-2 px-4 rounded-full border-2 font-medium transition ${
-                filterType === "all"
-                  ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                  : "border-slate-600 text-gray-300 hover:border-purple-400"
-              }`}
-            >
-              All Time
-            </button>
-          </div>
-
-          {filterType === "day" && (
-            <div className="mt-6 space-y-3">
-              <select
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {Array.from({ length: 31 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {filterType === "month" && (
-            <div className="mt-6 space-y-3">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {months.map((month, index) => (
-                  <option key={month} value={index + 1}>
-                    {month}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {filterType === "year" && (
-            <div className="mt-6 space-y-3">
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {filterType === "week" && (
-            <div className="mt-6 space-y-3">
-              <select
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {Array.from({ length: 31 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {i + 1}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {months.map((month, index) => (
-                  <option key={month} value={index + 1}>
-                    {month}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
       </div>
     </div>
