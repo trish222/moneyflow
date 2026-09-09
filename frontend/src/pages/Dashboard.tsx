@@ -114,7 +114,7 @@ export default function Dashboard() {
     : metrics.availableFunds;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
       <style>{`
         .glow-card {
           position: relative;
@@ -267,157 +267,113 @@ export default function Dashboard() {
       `}</style>
 
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+      <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Welcome, Trish</h1>
           <p className="text-purple-300">Financial Snapshot</p>
         </div>
+
+        {/* Activity Summary Filters */}
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          <button
+            onClick={() => setFilterType("day")}
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+              filterType === "day"
+                ? "border-purple-400 bg-purple-500/20 text-purple-300"
+                : "border-slate-600 text-gray-300 hover:border-purple-400"
+            }`}
+          >
+            Day
+          </button>
+
+          <button
+            onClick={() => setFilterType("week")}
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+              filterType === "week"
+                ? "border-purple-400 bg-purple-500/20 text-purple-300"
+                : "border-slate-600 text-gray-300 hover:border-purple-400"
+            }`}
+          >
+            Week
+          </button>
+
+          <button
+            onClick={() => setFilterType("month")}
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+              filterType === "month"
+                ? "border-purple-400 bg-purple-500/20 text-purple-300"
+                : "border-slate-600 text-gray-300 hover:border-purple-400"
+            }`}
+          >
+            Month
+          </button>
+
+          <button
+            onClick={() => setFilterType("year")}
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+              filterType === "year"
+                ? "border-purple-400 bg-purple-500/20 text-purple-300"
+                : "border-slate-600 text-gray-300 hover:border-purple-400"
+            }`}
+          >
+            Year
+          </button>
+
+          <button
+            onClick={() => setFilterType("all")}
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+              filterType === "all"
+                ? "border-purple-400 bg-purple-500/20 text-purple-300"
+                : "border-slate-600 text-gray-300 hover:border-purple-400"
+            }`}
+          >
+            All Time
+          </button>
+        </div>
       </div>
 
-      {/* Activity Summary - Horizontal Bar */}
-      <div className="mb-8 flex flex-wrap justify-end gap-2">
-        <h3 className="w-full text-right text-white font-semibold text-sm mb-2">Activity Summary</h3>
-        <button
-          onClick={() => setFilterType("day")}
-          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
-            filterType === "day"
-              ? "border-purple-400 bg-purple-500/20 text-purple-300"
-              : "border-slate-600 text-gray-300 hover:border-purple-400"
+      {/* Selectors for Filters - Reserved Space */}
+      <div className="mb-6 flex flex-wrap gap-3 justify-end h-10">
+        <select
+          value={selectedDay}
+          onChange={(e) => setSelectedDay(Number(e.target.value))}
+          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm ${
+            filterType === "day" || filterType === "week" ? "" : "hidden"
           }`}
         >
-          Day
-        </button>
-
-        <button
-          onClick={() => setFilterType("week")}
-          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
-            filterType === "week"
-              ? "border-purple-400 bg-purple-500/20 text-purple-300"
-              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          {Array.from({ length: 31 }, (_, i) => (
+            <option key={i + 1} value={i + 1}>
+              {i + 1}
+            </option>
+          ))}
+        </select>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm ${
+            filterType === "week" || filterType === "month" ? "" : "hidden"
           }`}
         >
-          Week
-        </button>
-
-        <button
-          onClick={() => setFilterType("month")}
-          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
-            filterType === "month"
-              ? "border-purple-400 bg-purple-500/20 text-purple-300"
-              : "border-slate-600 text-gray-300 hover:border-purple-400"
+          {months.map((month, index) => (
+            <option key={month} value={index + 1}>
+              {month}
+            </option>
+          ))}
+        </select>
+        <select
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(Number(e.target.value))}
+          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm ${
+            filterType === "week" || filterType === "month" || filterType === "year" ? "" : "hidden"
           }`}
         >
-          Month
-        </button>
-
-        <button
-          onClick={() => setFilterType("year")}
-          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
-            filterType === "year"
-              ? "border-purple-400 bg-purple-500/20 text-purple-300"
-              : "border-slate-600 text-gray-300 hover:border-purple-400"
-          }`}
-        >
-          Year
-        </button>
-
-        <button
-          onClick={() => setFilterType("all")}
-          className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
-            filterType === "all"
-              ? "border-purple-400 bg-purple-500/20 text-purple-300"
-              : "border-slate-600 text-gray-300 hover:border-purple-400"
-          }`}
-        >
-          All Time
-        </button>
+          {years.map((year) => (
+            <option key={year} value={year}>
+              {year}
+            </option>
+          ))}
+        </select>
       </div>
-
-      {/* Selectors for Filters */}
-      {(filterType === "day" || filterType === "week") && (
-        <div className="mb-6 flex flex-wrap gap-3 justify-end">
-          <select
-            value={selectedDay}
-            onChange={(e) => setSelectedDay(Number(e.target.value))}
-            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-          >
-            {Array.from({ length: 31 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1}
-              </option>
-            ))}
-          </select>
-          {filterType === "week" && (
-            <>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {months.map((month, index) => (
-                  <option key={month} value={index + 1}>
-                    {month}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </>
-          )}
-        </div>
-      )}
-
-      {filterType === "month" && (
-        <div className="mb-6 flex flex-wrap gap-3 justify-end">
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-          >
-            {months.map((month, index) => (
-              <option key={month} value={index + 1}>
-                {month}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
-      {filterType === "year" && (
-        <div className="mb-6 flex flex-wrap gap-3 justify-end">
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm"
-          >
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* Main Content - Masonry Staggered Layout */}
       <div className="dashboard-layout">

@@ -5,8 +5,8 @@ interface Investment {
   name: string;
   type: string;
   value: number;
-  gain: number;
-  percentage: number;
+  gain?: number;
+  percentage?: number;
 }
 
 export default function Investments() {
@@ -24,7 +24,7 @@ export default function Investments() {
         setInvestments(data);
 
         const total = data.reduce((sum: number, inv: Investment) => sum + inv.value, 0);
-        const gains = data.reduce((sum: number, inv: Investment) => sum + inv.gain, 0);
+        const gains = data.reduce((sum: number, inv: Investment) => sum + (inv.gain || 0), 0);
         setTotalValue(total);
         setTotalGain(gains);
       } catch (error) {
@@ -38,7 +38,7 @@ export default function Investments() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
       <style>{`
         .glow-card {
           position: relative;
@@ -149,17 +149,19 @@ export default function Investments() {
                     <div className="w-full bg-slate-700 rounded-full h-2">
                       <div
                         className="bg-green-500 h-2 rounded-full"
-                        style={{ width: `${Math.min(investment.percentage, 100)}%` }}
+                        style={{ width: `${Math.min(investment.percentage || 0, 100)}%` }}
                       ></div>
                     </div>
                   </div>
-                  <span
-                    className={`ml-4 font-semibold text-sm ${
-                      investment.gain >= 0 ? "text-green-400" : "text-red-400"
-                    }`}
-                  >
-                    {investment.gain >= 0 ? "+" : ""}${investment.gain.toFixed(2)}
-                  </span>
+                  {investment.gain !== undefined && (
+                    <span
+                      className={`ml-4 font-semibold text-sm ${
+                        investment.gain >= 0 ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      {investment.gain >= 0 ? "+" : ""}${investment.gain.toFixed(2)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

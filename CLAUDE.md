@@ -10,6 +10,33 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - Build: Vite
 - Routing: React Router v6
 - Backend: Node.js/Express API (running on `http://localhost:3000`)
+- Database: PostgreSQL with Prisma ORM
+
+---
+
+## Ground Rules (September 2026 Session)
+
+**Visual & Layout**:
+- ✅ Background is **dark ombre**: `from-slate-950 via-gray-900 to-slate-950` (no purple)
+- ✅ Activity summary filters are on the **same line as welcome message** on desktop
+- ✅ **No layout shift** when changing filters - use fixed-height containers with `hidden` class instead of conditional rendering
+- ✅ Maintain responsive design with `lg:flex-row` for desktop, stacked on mobile
+
+**Database & Data**:
+- ✅ Run seed script on fresh setup: `npx ts-node prisma/seed.ts`
+- ✅ Default user ID is 1 - all API queries filter by this
+- ✅ Test data includes accounts, transactions, investments, debts, savings goals, budgets
+
+**Frontend Development**:
+- ✅ Make optional API fields nullable with `?` in TypeScript interfaces
+- ✅ Always provide fallback values for optional fields (e.g., `field || defaultValue`)
+- ✅ Use glow-card system for all containers with appropriate color classes
+- ✅ Ensure all pages show proper loading and empty states
+
+**Distribution Planning**:
+- Target downloadable formats: Desktop (Electron), Mobile (React Native or PWA)
+- Build mobile-friendly responsive web first, then wrap with Electron for desktop
+- Use PWA for easy browser installation on mobile
 
 ---
 
@@ -18,7 +45,7 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 ### Color Palette
 
 #### Primary Colors
-- **Background**: Gradient from slate-900 → purple-900 → slate-900
+- **Background**: Gradient from slate-950 → gray-900 → slate-950 (dark ombre, no purple)
 - **Primary Accent**: Purple-400 to Purple-600
 - **Text Primary**: White (rgb(255, 255, 255))
 - **Text Secondary**: Gray-300 (rgb(209, 213, 219))
@@ -274,10 +301,10 @@ Color variations based on progress:
 
 ### Page Container
 
-All pages use this consistent structure:
+All pages use this consistent structure with dark ombre background:
 
 ```tsx
-<div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
+<div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
   {/* page content */}
 </div>
 ```
@@ -461,13 +488,29 @@ Pattern used in Dashboard activity summary:
 ```tsx
 const [filterType, setFilterType] = useState("month");
 const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
-const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+const [selectedYear] = useState(new Date().getFullYear());
 
 // Fetch data changes based on filter
 useEffect(() => {
   fetchData();
 }, [filterType, selectedMonth, selectedYear]);
 ```
+
+**Important**: To prevent layout shift when changing filter types, **always render filter dropdowns with reserved space** instead of conditional rendering. Use a fixed-height container with `hidden` classes:
+
+```tsx
+<div className="mb-6 flex flex-wrap gap-3 justify-end h-10">
+  <select className={`... ${filterType === "day" || filterType === "week" ? "" : "hidden"}`}>
+    {/* Day select */}
+  </select>
+  <select className={`... ${filterType === "week" || filterType === "month" ? "" : "hidden"}`}>
+    {/* Month select */}
+  </select>
+  {/* more selects */}
+</div>
+```
+
+This keeps the container height constant regardless of which dropdowns are visible.
 
 ### Hover Effects
 
@@ -486,6 +529,12 @@ useEffect(() => {
 ### Dashboard Layout
 
 Dashboard uses a 2-column layout for organizing metric cards and page cards:
+
+**Header with Activity Filters**:
+- Welcome message and subtitle on the left
+- Activity summary time filter buttons (Day/Week/Month/Year/All Time) on the right, same line on desktop
+- Responsive: stacks on mobile, horizontal on lg screens with `gap-6`
+- Filters always positioned with welcome message, no separate "Activity Summary" label
 
 **Overall Structure**:
 - **Left Column** (1fr): 4 metric cards stacked vertically
@@ -666,6 +715,46 @@ frontend/
 **Issue**: API 404 errors
 - Solution: Verify backend is running on `http://localhost:3000`
 - Check endpoint path matches backend routes
+
+**Issue**: Pages show empty state even after adding data
+- Solution: Run database seed script: `cd backend && npx ts-node prisma/seed.ts`
+- Verify backend and frontend are both running
+
+**Issue**: Optional API fields causing TypeScript errors
+- Solution: Make interface fields optional with `?` (e.g., `gain?: number`)
+- Provide default values when using optional fields (e.g., `investment.gain || 0`)
+
+---
+
+## Database Setup
+
+### Initial Data Population
+
+After setting up the PostgreSQL database and running migrations, populate it with seed data:
+
+```bash
+cd backend
+npx ts-node prisma/seed.ts
+```
+
+This creates:
+- 1 default user (userId: 1)
+- 2 sample accounts (Checking, Savings)
+- 6 sample transactions (income and expenses)
+- 3 sample investments (stocks, ETF, crypto)
+- 2 sample debts (Student Loan, Credit Card)
+- 3 sample savings goals
+- 3 sample budget categories for current month
+
+**Note**: The backend uses `DEFAULT_USER_ID = 1` for all API queries. Seed script ensures user exists before adding data.
+
+### API Data Format
+
+When designing API endpoints, ensure:
+- Return fields match frontend interface definitions
+- Optional fields should be handled gracefully (with `?` in TypeScript interfaces)
+- All numeric values should be properly typed (numbers, not strings)
+- Dates should be ISO format strings for consistent parsing
 
 ---
 
