@@ -24,6 +24,12 @@ interface Budget {
   spent?: number;
 }
 
+interface InvestmentAccount {
+  id: number;
+  name?: string;
+  accountType?: string;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
@@ -36,6 +42,8 @@ export default function Dashboard() {
 
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [investmentAccounts, setInvestmentAccounts] = useState<InvestmentAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState("month");
   const [selectedDay, setSelectedDay] = useState(new Date().getDate());
@@ -70,12 +78,33 @@ export default function Dashboard() {
       const budgetsResponse = await fetch(`http://localhost:3000/api/budgets?month=${selectedMonth}&year=${selectedYear}`);
       const budgetsData = await budgetsResponse.json();
       setBudgets(budgetsData.slice(0, 3));
+
+      const accountsResponse = await fetch("http://localhost:3000/api/investment-accounts");
+      const accountsData = await accountsResponse.json();
+
+      // Fetch investment details for each account
+      const accountsWithInvestments = await Promise.all(
+        accountsData.map(async (account: InvestmentAccount) => {
+          try {
+            const invResponse = await fetch(`http://localhost:3000/api/investment-accounts/${account.id}`);
+            const fullAccount = await invResponse.json();
+            return fullAccount;
+          } catch {
+            return account;
+          }
+        })
+      );
+
+      setInvestmentAccounts(accountsWithInvestments);
+      if (accountsWithInvestments.length > 0 && !selectedAccountId) {
+        setSelectedAccountId(accountsWithInvestments[0].id);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
-  }, [filterType, selectedMonth, selectedYear, selectedDay]);
+  }, [filterType, selectedMonth, selectedYear, selectedDay, selectedAccountId]);
 
   useEffect(() => {
     fetchData();
@@ -585,15 +614,62 @@ export default function Dashboard() {
                 </svg>
               </div>
 
-              <div className="space-y-3">
-                <div className="border-l-4 border-green-400 pl-4 py-2">
-                  <p className="text-gray-400 text-sm">Total Invested</p>
-                  <p className="text-2xl font-bold text-green-300">
-                    ${metrics.investmentsValue.toFixed(2)}
-                  </p>
+              {investmentAccounts.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="mb-4">
+                    <select
+                      value={selectedAccountId || "all"}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setSelectedAccountId(e.target.value === "all" ? null : Number(e.target.value));
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-green-300 text-sm font-medium hover:border-green-400 focus:border-green-400 focus:outline-none transition"
+                    >
+                      <option value="all">All Accounts - Total Portfolio</option>
+                      {investmentAccounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.name} ({account.accountType})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {(() => {
+                    const accountInvestments = selectedAccountId
+                      ? investmentAccounts.find((a) => a.id === selectedAccountId)?.investments || []
+                      : investmentAccounts.flatMap((a) => a.investments || []);
+                    const totalValue = accountInvestments.reduce((sum: number, inv: any) => sum + (inv.value || 0), 0);
+                    const totalGain = accountInvestments.reduce((sum: number, inv: any) => sum + (inv.gain || 0), 0);
+                    const investedAmount = totalValue - totalGain;
+                    return (
+                      <>
+                        <div className="border-l-4 border-green-400 pl-4 py-2">
+                          <p className="text-gray-400 text-xs">Total Value</p>
+                          <p className="text-4xl font-bold text-green-300">
+                            ${totalValue.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-green-400 pl-4 py-2">
+                          <p className="text-gray-400 text-xs">Invested Amount</p>
+                          <p className="text-sm font-semibold text-green-400">
+                            ${investedAmount.toFixed(2)}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
-                <p className="text-xs text-gray-400">View detailed portfolio breakdown</p>
-              </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="border-l-4 border-green-400 pl-4 py-2">
+                    <p className="text-gray-400 text-sm">Total Invested</p>
+                    <p className="text-2xl font-bold text-green-300">
+                      ${(metrics.investmentsValue || 0).toFixed(2)}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-400">View detailed portfolio breakdown</p>
+                </div>
+              )}
             </div>
 
           </div>

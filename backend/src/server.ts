@@ -190,13 +190,26 @@ app.get("/api/investments", async (req, res) => {
 
 app.post("/api/investments", async (req, res) => {
   try {
-    const { name, value, type, date } = req.body;
+    const { name, value, type, date, investmentAccountId } = req.body;
     if (!name || value === undefined || !type || !date) {
       return res.status(400).json({ error: "Missing required fields" });
     }
+
+    let accountId = investmentAccountId;
+    if (!accountId) {
+      const accountResult = await pool.query(
+        "SELECT id FROM \"InvestmentAccount\" WHERE \"userId\" = $1 LIMIT 1",
+        [DEFAULT_USER_ID]
+      );
+      if (accountResult.rows.length === 0) {
+        return res.status(400).json({ error: "No investment account found. Create one first." });
+      }
+      accountId = accountResult.rows[0].id;
+    }
+
     const result = await pool.query(
-      "INSERT INTO \"Investment\" (\"userId\", name, value, type, date, \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *",
-      [DEFAULT_USER_ID, name, parseFloat(value), type, new Date(date)]
+      "INSERT INTO \"Investment\" (\"userId\", \"investmentAccountId\", name, value, type, date, \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING *",
+      [DEFAULT_USER_ID, accountId, name, parseFloat(value), type, new Date(date)]
     );
     res.json(result.rows[0]);
   } catch (error) {
@@ -207,10 +220,10 @@ app.post("/api/investments", async (req, res) => {
 app.put("/api/investments/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, value, type, date } = req.body;
+    const { name, value, type, date, investmentAccountId } = req.body;
     const result = await pool.query(
-      "UPDATE \"Investment\" SET name = $1, value = $2, type = $3, date = $4, \"updatedAt\" = NOW() WHERE id = $5 AND \"userId\" = $6 RETURNING *",
-      [name, parseFloat(value), type, new Date(date), id, DEFAULT_USER_ID]
+      "UPDATE \"Investment\" SET name = $1, value = $2, type = $3, date = $4, \"investmentAccountId\" = $5, \"updatedAt\" = NOW() WHERE id = $6 AND \"userId\" = $7 RETURNING *",
+      [name, parseFloat(value), type, new Date(date), investmentAccountId, id, DEFAULT_USER_ID]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: "Investment not found" });
     res.json(result.rows[0]);
@@ -227,6 +240,75 @@ app.delete("/api/investments/:id", async (req, res) => {
     res.json({ message: "Investment deleted" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete investment" });
+  }
+});
+
+// Investment Account endpoints
+app.get("/api/investment-accounts", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM \"InvestmentAccount\" WHERE \"userId\" = $1 ORDER BY \"createdAt\" DESC", [DEFAULT_USER_ID]);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch investment accounts" });
+  }
+});
+
+app.get("/api/investment-accounts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const accountResult = await pool.query("SELECT * FROM \"InvestmentAccount\" WHERE id = $1 AND \"userId\" = $2", [id, DEFAULT_USER_ID]);
+    if (accountResult.rows.length === 0) return res.status(404).json({ error: "Investment account not found" });
+
+    const investmentsResult = await pool.query("SELECT * FROM \"Investment\" WHERE \"investmentAccountId\" = $1 ORDER BY date DESC", [id]);
+    const account = accountResult.rows[0];
+    account.investments = investmentsResult.rows;
+
+    res.json(account);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch investment account" });
+  }
+});
+
+app.post("/api/investment-accounts", async (req, res) => {
+  try {
+    const { name, accountType } = req.body;
+    if (!name || !accountType) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const result = await pool.query(
+      "INSERT INTO \"InvestmentAccount\" (\"userId\", name, \"accountType\", \"createdAt\", \"updatedAt\") VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *",
+      [DEFAULT_USER_ID, name, accountType]
+    );
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create investment account" });
+  }
+});
+
+app.put("/api/investment-accounts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, accountType } = req.body;
+    const result = await pool.query(
+      "UPDATE \"InvestmentAccount\" SET name = $1, \"accountType\" = $2, \"updatedAt\" = NOW() WHERE id = $3 AND \"userId\" = $4 RETURNING *",
+      [name, accountType, id, DEFAULT_USER_ID]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: "Investment account not found" });
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update investment account" });
+  }
+});
+
+app.delete("/api/investment-accounts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM \"Investment\" WHERE \"investmentAccountId\" = $1", [id]);
+    const result = await pool.query("DELETE FROM \"InvestmentAccount\" WHERE id = $1 AND \"userId\" = $2 RETURNING *", [id, DEFAULT_USER_ID]);
+    if (result.rows.length === 0) return res.status(404).json({ error: "Investment account not found" });
+    res.json({ message: "Investment account deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete investment account" });
   }
 });
 

@@ -32,6 +32,20 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - ✅ Always provide fallback values for optional fields (e.g., `field || defaultValue`)
 - ✅ Use glow-card system for all containers with appropriate color classes
 - ✅ Ensure all pages show proper loading and empty states
+- ✅ **Null/Undefined Handling Pattern** (September 10, 2026):
+  - For numeric fields: `(field || 0).toFixed(2)` at point of display
+  - For text fields: `field || "Unknown"` or `field || "N/A"` 
+  - For calculated fields (division): Check denominator > 0 before calculating
+  - Create intermediate variables with fallbacks: `const value = apiField || 0;`
+  - Never chain `.toFixed()` on potentially undefined values
+  - Test all pages with incomplete API responses
+
+**Investment Tracking**:
+- ✅ Multi-account system: Brokerage, 401k, Roth IRA, Traditional IRA, HSA
+- ✅ Each investment belongs to a specific account
+- ✅ Support for creating, editing, and deleting accounts
+- ✅ Support for adding and deleting investments per account
+- ✅ "All Accounts - Total Portfolio" view for combined metrics
 
 **Distribution Planning**:
 - Target downloadable formats: Desktop (Electron), Mobile (React Native or PWA)
@@ -470,6 +484,13 @@ For cards that navigate to pages, use this pattern:
 - **Error Handling**: Always wrap in try-catch, console.error on failure
 - **Loading State**: Always manage loading with useState
 - **Data Fetching**: Use async/await pattern
+- **Field Handling**: Assume API responses may have missing fields:
+  - Make interface fields optional with `?` (except required id)
+  - Provide safe fallback values at point of use
+  - Never chain methods on potentially undefined values
+  - For numeric: `(field || 0).toFixed(2)` 
+  - For text: `field || "Unknown"`
+  - For calculations: Check denominators before division
 
 ### Comments
 
@@ -724,6 +745,13 @@ frontend/
 - Solution: Make interface fields optional with `?` (e.g., `gain?: number`)
 - Provide default values when using optional fields (e.g., `investment.gain || 0`)
 
+**Issue**: Page shows blank/white screen with "Cannot read properties of undefined" error
+- Solution: Check browser console for exact field causing the error
+- Make the field optional in interface: `fieldName?: type`
+- Add safe fallback at point of use: `(field || defaultValue).toFixed(2)` for numbers
+- Test page with incomplete API responses to ensure all fields have fallbacks
+- Pattern for calculations: `const spent = api.spent || 0; const percentage = limit > 0 ? (spent/limit)*100 : 0;`
+
 ---
 
 ## Database Setup
@@ -755,6 +783,68 @@ When designing API endpoints, ensure:
 - Optional fields should be handled gracefully (with `?` in TypeScript interfaces)
 - All numeric values should be properly typed (numbers, not strings)
 - Dates should be ISO format strings for consistent parsing
+
+---
+
+## Investment Account Management (September 10, 2026)
+
+### Database Schema
+- **InvestmentAccount** table: Stores account details (name, accountType, userId)
+- **Investment** table: Now has foreign key `investmentAccountId` linking to InvestmentAccount
+- Supports account types: Brokerage, 401k, Roth IRA, Traditional IRA, HSA
+
+### Backend API Endpoints
+
+**Investment Accounts:**
+- `GET /api/investment-accounts` - List all accounts
+- `GET /api/investment-accounts/:id` - Get account with all investments
+- `POST /api/investment-accounts` - Create new account
+  - Required: `name`, `accountType`
+- `PUT /api/investment-accounts/:id` - Update account
+  - Fields: `name`, `accountType`
+- `DELETE /api/investment-accounts/:id` - Delete account (cascades to investments)
+
+**Investments (Updated):**
+- `POST /api/investments` - Create investment
+  - Now accepts `investmentAccountId` parameter
+  - If not provided, uses first available account
+- All other endpoints updated to support new schema
+
+### Frontend Features
+
+**Investments Page:**
+- Account dropdown selector with "All Accounts - Total Portfolio" option
+- Add Account form (name + type selection)
+- Delete Account button (visible when account selected)
+- Add Investment form (name, type, value)
+- Summary cards showing:
+  - Total Contributions (invested amount)
+  - Portfolio Value (current worth)
+  - Total Gain/Loss (with percentage return)
+- Holdings list with delete buttons on hover
+- All metrics update per-account or show combined totals
+
+**Dashboard Investments Card:**
+- Dropdown selector for account selection
+- "All Accounts - Total Portfolio" option
+- Shows:
+  - Total Value (large emphasis, text-4xl)
+  - Invested Amount (smaller, text-sm)
+- Click dropdown to switch without navigating away
+
+### Data Calculations
+
+**Invested Amount:** `Total Value - Total Gain` (cost basis)
+**Percentage Return:** `(Total Gain / Invested Amount) * 100`
+
+Color coding:
+- Positive gains: Green
+- Negative gains: Red
+
+### Migration Notes
+- Existing investments auto-migrated to "Default Account"
+- Seed script creates 3 sample accounts with associated investments
+- All existing data preserved during migration
 
 ---
 

@@ -54,18 +54,49 @@ async function seed() {
     }
     console.log("Transactions added");
 
+    // Add sample investment accounts
+    const investmentAccounts = [
+      { name: "Fidelity Brokerage", accountType: "Brokerage" },
+      { name: "Roth IRA", accountType: "Roth IRA" },
+      { name: "401k", accountType: "401k" },
+    ];
+
+    const accountIds: number[] = [];
+    for (const account of investmentAccounts) {
+      const result = await pool.query(
+        `INSERT INTO "InvestmentAccount" ("userId", name, "accountType", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, NOW(), NOW()) ON CONFLICT DO NOTHING
+         RETURNING id`,
+        [DEFAULT_USER_ID, account.name, account.accountType]
+      );
+      if (result.rows.length > 0) {
+        accountIds.push(result.rows[0].id);
+      }
+    }
+
+    // If accounts already exist, fetch them
+    if (accountIds.length === 0) {
+      const existingAccounts = await pool.query(
+        `SELECT id FROM "InvestmentAccount" WHERE "userId" = $1 ORDER BY "createdAt" ASC`,
+        [DEFAULT_USER_ID]
+      );
+      accountIds.push(...existingAccounts.rows.map((row: any) => row.id));
+    }
+    console.log("Investment accounts added");
+
     // Add sample investments
     const investments = [
-      { name: "Apple Stock", value: 5000, type: "stock" },
-      { name: "S&P 500 ETF", value: 8500, type: "etf" },
-      { name: "Bitcoin", value: 3200, type: "crypto" },
+      { name: "Apple Stock", value: 5000, type: "stock", accountIndex: 0 },
+      { name: "S&P 500 ETF", value: 8500, type: "etf", accountIndex: 1 },
+      { name: "Bitcoin", value: 3200, type: "crypto", accountIndex: 2 },
     ];
 
     for (const inv of investments) {
+      const accountId = accountIds[inv.accountIndex] || accountIds[0];
       await pool.query(
-        `INSERT INTO "Investment" ("userId", name, value, type, date, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, NOW(), NOW(), NOW()) ON CONFLICT DO NOTHING`,
-        [DEFAULT_USER_ID, inv.name, inv.value, inv.type]
+        `INSERT INTO "Investment" ("userId", "investmentAccountId", name, value, type, date, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, $5, NOW(), NOW(), NOW()) ON CONFLICT DO NOTHING`,
+        [DEFAULT_USER_ID, accountId, inv.name, inv.value, inv.type]
       );
     }
     console.log("Investments added");
