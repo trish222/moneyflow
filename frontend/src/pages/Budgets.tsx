@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 
 interface Budget {
   id: number;
-  category: string;
-  limit: number;
-  spent: number;
-  month: number;
-  year: number;
+  category?: string;
+  limit?: number;
+  spent?: number;
+  month?: number;
+  year?: number;
 }
 
 export default function Budgets() {
@@ -179,7 +179,9 @@ export default function Budgets() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {budgets.map((budget) => {
-              const percentage = (budget.spent / budget.limit) * 100;
+              const spent = budget.spent || 0;
+              const limit = budget.limit || 0;
+              const percentage = limit > 0 ? (spent / limit) * 100 : 0;
               let barColor = "bg-blue-500";
               let statusColor = "text-blue-400";
 
@@ -219,7 +221,7 @@ export default function Budgets() {
                         {percentage.toFixed(0)}% used
                       </span>
                       <span className="text-sm text-gray-400">
-                        ${budget.spent.toFixed(2)} / ${budget.limit.toFixed(2)}
+                        ${spent.toFixed(2)} / ${limit.toFixed(2)}
                       </span>
                     </div>
                     <div className="w-full bg-slate-700 rounded-full h-3">
@@ -232,7 +234,7 @@ export default function Budgets() {
 
                   {percentage > 100 && (
                     <p className="text-red-400 text-sm">
-                      Over budget by ${(budget.spent - budget.limit).toFixed(2)}
+                      Over budget by ${(spent - limit).toFixed(2)}
                     </p>
                   )}
                 </div>

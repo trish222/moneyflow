@@ -2,26 +2,26 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface DashboardMetrics {
-  netWorth: number;
-  availableFunds: number;
-  debts: number;
-  savings: number;
-  investmentsValue: number;
+  netWorth?: number;
+  availableFunds?: number;
+  debts?: number;
+  savings?: number;
+  investmentsValue?: number;
 }
 
 interface Transaction {
   id: number;
-  amount: number;
-  type: string;
-  category: string;
-  date: string;
+  amount?: number;
+  type?: string;
+  category?: string;
+  date?: string;
 }
 
 interface Budget {
   id: number;
-  category: string;
-  limit: number;
-  spent: number;
+  category?: string;
+  limit?: number;
+  spent?: number;
 }
 
 export default function Dashboard() {
@@ -392,7 +392,7 @@ export default function Dashboard() {
               </div>
             </div>
             <p className="text-5xl md:text-6xl font-bold text-red-300 mb-4">
-              ${displayNetWorth.toFixed(2)}
+              ${(displayNetWorth || 0).toFixed(2)}
             </p>
             <p className="text-xs text-gray-400">↑ 0.05%</p>
           </div>
@@ -401,24 +401,64 @@ export default function Dashboard() {
           <div className="glow-card glow-cyan">
             <h3 className="text-white font-semibold mb-3">Available Funds</h3>
             <p className="text-3xl font-bold text-cyan-300">
-              ${metrics.availableFunds.toFixed(2)}
+              ${(metrics.availableFunds || 0).toFixed(2)}
             </p>
           </div>
 
           {/* Savings Card */}
-          <div className="glow-card glow-blue">
-            <h3 className="text-white font-semibold mb-3">Savings</h3>
-            <p className="text-3xl font-bold text-blue-300">
-              ${metrics.savings.toFixed(2)}
-            </p>
+          <div
+            onClick={() => navigate("/savings")}
+            className="glow-card glow-blue cursor-pointer group"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-white font-semibold mb-3">Savings</h3>
+                <p className="text-3xl font-bold text-blue-300">
+                  ${(metrics.savings || 0).toFixed(2)}
+                </p>
+              </div>
+              <svg
+                className="w-6 h-6 text-blue-400 group-hover:translate-x-1 transition"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
           </div>
 
           {/* Debt Card */}
-          <div className="glow-card glow-purple">
-            <h3 className="text-white font-semibold mb-3">Debt</h3>
-            <p className="text-3xl font-bold text-purple-300">
-              ${metrics.debts.toFixed(2)}
-            </p>
+          <div
+            onClick={() => navigate("/debt")}
+            className="glow-card glow-purple cursor-pointer group"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-white font-semibold mb-3">Debt</h3>
+                <p className="text-3xl font-bold text-purple-300">
+                  ${(metrics.debts || 0).toFixed(2)}
+                </p>
+              </div>
+              <svg
+                className="w-6 h-6 text-purple-400 group-hover:translate-x-1 transition"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -491,7 +531,9 @@ export default function Dashboard() {
               {budgets.length > 0 ? (
                 <div className="space-y-4">
                   {budgets.slice(0, 2).map((budget) => {
-                    const percentage = (budget.spent / budget.limit) * 100;
+                    const spent = budget.spent || 0;
+                    const limit = budget.limit || 0;
+                    const percentage = limit > 0 ? (spent / limit) * 100 : 0;
                     let barColor = "bg-blue-500";
                     if (percentage > 100) barColor = "bg-red-500";
                     else if (percentage > 75) barColor = "bg-yellow-500";
@@ -500,10 +542,10 @@ export default function Dashboard() {
                       <div key={budget.id}>
                         <div className="flex justify-between mb-2">
                           <span className="text-gray-300 capitalize text-sm">
-                            {budget.category}
+                            {budget.category || "Unknown"}
                           </span>
                           <span className="text-xs text-gray-400">
-                            ${budget.spent.toFixed(0)} / ${budget.limit.toFixed(0)}
+                            ${spent.toFixed(0)} / ${limit.toFixed(0)}
                           </span>
                         </div>
                         <div className="w-full bg-slate-700 rounded-full h-2">

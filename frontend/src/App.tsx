@@ -18,8 +18,11 @@ function App() {
         <nav className="bg-slate-900/80 backdrop-blur border-b border-purple-500/20">
           <div className="w-full px-4 md:px-8 py-4">
             <div className="flex items-center justify-between gap-8">
-              <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent flex-shrink-0">
-                MoneyFlow
+              <Link
+                to="/"
+                className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent flex-shrink-0"
+              >
+                moneyflow
               </Link>
 
               <ul className="flex gap-6 md:gap-10 flex-wrap justify-center flex-1">
@@ -94,7 +97,7 @@ function App() {
         </nav>
 
         {/* Page Content */}
-        <div>
+        <div className="min-h-screen">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/transactions" element={<Transactions />} />

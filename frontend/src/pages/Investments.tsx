@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 interface Investment {
   id: number;
-  name: string;
-  type: string;
-  value: number;
+  name?: string;
+  type?: string;
+  value?: number;
   gain?: number;
   percentage?: number;
 }
@@ -23,7 +23,7 @@ export default function Investments() {
         const data = await response.json();
         setInvestments(data);
 
-        const total = data.reduce((sum: number, inv: Investment) => sum + inv.value, 0);
+        const total = data.reduce((sum: number, inv: Investment) => sum + (inv.value || 0), 0);
         const gains = data.reduce((sum: number, inv: Investment) => sum + (inv.gain || 0), 0);
         setTotalValue(total);
         setTotalGain(gains);
@@ -134,12 +134,12 @@ export default function Investments() {
               >
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className="text-white font-semibold">{investment.name}</h3>
-                    <p className="text-xs text-gray-400 capitalize">{investment.type}</p>
+                    <h3 className="text-white font-semibold">{investment.name || "Unknown"}</h3>
+                    <p className="text-xs text-gray-400 capitalize">{investment.type || "Unknown"}</p>
                   </div>
                   <p className="text-right">
                     <span className="text-lg font-bold text-green-300">
-                      ${investment.value.toFixed(2)}
+                      ${(investment.value || 0).toFixed(2)}
                     </span>
                   </p>
                 </div>

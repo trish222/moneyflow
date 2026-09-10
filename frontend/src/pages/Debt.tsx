@@ -3,11 +3,11 @@ import { useEffect, useState } from "react";
 interface DebtItem {
   id: number;
   name: string;
-  type: string;
-  amount: number;
-  interestRate: number;
-  monthlyPayment: number;
-  dueDate: string;
+  type?: string;
+  amount?: number;
+  interestRate?: number;
+  monthlyPayment?: number;
+  dueDate?: string;
 }
 
 export default function Debt() {
@@ -136,11 +136,11 @@ export default function Debt() {
                 <div className="flex justify-between items-start mb-3">
                   <div>
                     <h3 className="text-white font-semibold">{debt.name}</h3>
-                    <p className="text-xs text-gray-400 capitalize">{debt.type}</p>
+                    <p className="text-xs text-gray-400 capitalize">{debt.type || "Unknown"}</p>
                   </div>
                   <p className="text-right">
                     <span className="text-lg font-bold text-blue-300">
-                      ${debt.amount.toFixed(2)}
+                      ${(debt.amount || 0).toFixed(2)}
                     </span>
                     <p className="text-xs text-gray-400">Balance</p>
                   </p>
@@ -149,16 +149,16 @@ export default function Debt() {
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Interest Rate</p>
-                    <p className="text-white font-semibold">{debt.interestRate.toFixed(2)}%</p>
+                    <p className="text-white font-semibold">{(debt.interestRate || 0).toFixed(2)}%</p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-400 mb-1">Monthly Payment</p>
-                    <p className="text-white font-semibold">${debt.monthlyPayment.toFixed(2)}</p>
+                    <p className="text-white font-semibold">${(debt.monthlyPayment || 0).toFixed(2)}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <p className="text-gray-400">Due: {debt.dueDate}</p>
+                  <p className="text-gray-400">Due: {debt.dueDate || "N/A"}</p>
                   <div className="w-24 bg-slate-700 rounded-full h-2">
                     <div
                       className="bg-blue-500 h-2 rounded-full"

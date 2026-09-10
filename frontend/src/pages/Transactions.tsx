@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 
 interface Transaction {
   id: number;
-  amount: number;
-  type: string;
-  category: string;
-  date: string;
+  amount?: number;
+  type?: string;
+  category?: string;
+  date?: string;
 }
 
 export default function Transactions() {
@@ -211,24 +211,24 @@ export default function Transactions() {
                       className="border-b border-slate-700 hover:bg-slate-700/30 transition"
                     >
                       <td className="px-6 py-4 text-gray-300">
-                        {new Date(t.date).toLocaleDateString()}
+                        {t.date ? new Date(t.date).toLocaleDateString() : "N/A"}
                       </td>
                       <td className="px-6 py-4 text-gray-300 capitalize">
-                        {t.category}
+                        {t.category || "N/A"}
                       </td>
                       <td className="px-6 py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            t.type === "income"
+                            (t.type || "").toLowerCase() === "income"
                               ? "bg-green-500/20 text-green-400"
                               : "bg-red-500/20 text-red-400"
                           }`}
                         >
-                          {t.type.charAt(0).toUpperCase() + t.type.slice(1)}
+                          {((t.type || "").charAt(0).toUpperCase() + (t.type || "").slice(1)) || "N/A"}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right font-semibold text-gray-300">
-                        ${t.amount.toFixed(2)}
+                        ${(t.amount || 0).toFixed(2)}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button
