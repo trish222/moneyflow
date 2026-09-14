@@ -232,8 +232,12 @@ export default function Dashboard() {
           background-color: #334155;
           border-radius: 20px;
           cursor: pointer;
-          transition: background-color 0.3s;
+          transition: background-color 0.3s, border-color 0.3s;
           border: 1px solid #475569;
+        }
+        .toggle-switch:hover {
+          border-color: #a78bfa;
+          background-color: #475569;
         }
         .toggle-switch.active {
           background-color: #6366f1;
@@ -306,10 +310,10 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-2 lg:justify-end">
           <button
             onClick={() => setFilterType("day")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
               filterType === "day"
                 ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400"
+                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
             }`}
           >
             Day
@@ -317,10 +321,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("week")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
               filterType === "week"
                 ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400"
+                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
             }`}
           >
             Week
@@ -328,10 +332,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("month")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
               filterType === "month"
                 ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400"
+                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
             }`}
           >
             Month
@@ -339,10 +343,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("year")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
               filterType === "year"
                 ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400"
+                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
             }`}
           >
             Year
@@ -350,10 +354,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("all")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
               filterType === "all"
                 ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400"
+                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
             }`}
           >
             All Time
@@ -366,7 +370,7 @@ export default function Dashboard() {
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm ${
+          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition ${
             filterType === "day" || filterType === "week" ? "" : "hidden"
           }`}
         >
@@ -379,7 +383,7 @@ export default function Dashboard() {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm ${
+          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition ${
             filterType === "week" || filterType === "month" ? "" : "hidden"
           }`}
         >
@@ -392,7 +396,7 @@ export default function Dashboard() {
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm ${
+          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition ${
             filterType === "week" || filterType === "month" || filterType === "year" ? "" : "hidden"
           }`}
         >
@@ -624,7 +628,7 @@ export default function Dashboard() {
                         setSelectedAccountId(e.target.value === "all" ? null : Number(e.target.value));
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-green-300 text-sm font-medium hover:border-green-400 focus:border-green-400 focus:outline-none transition"
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-green-300 text-sm font-medium cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
                     >
                       <option value="all">All Accounts - Total Portfolio</option>
                       {investmentAccounts.map((account) => (

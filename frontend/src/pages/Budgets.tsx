@@ -87,7 +87,7 @@ export default function Budgets() {
           <h1 className="text-4xl font-bold text-white">Budgets</h1>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
           >
             {showForm ? "Cancel" : "+ Add Budget"}
           </button>
@@ -97,7 +97,7 @@ export default function Budgets() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium"
+            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition"
           >
             {months.map((m, i) => (
               <option key={m} value={i + 1}>
@@ -108,7 +108,7 @@ export default function Budgets() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium"
+            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -133,7 +133,7 @@ export default function Budgets() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
                 >
                   {categories.map((c) => (
                     <option key={c} value={c}>
@@ -154,14 +154,14 @@ export default function Budgets() {
                   onChange={(e) =>
                     setFormData({ ...formData, limit: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="0.00"
                 />
               </div>
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
             >
               Add Budget
             </button>
@@ -209,7 +209,7 @@ export default function Budgets() {
                     </div>
                     <button
                       onClick={() => handleDeleteBudget(budget.id)}
-                      className="text-red-400 hover:text-red-300 transition text-lg"
+                      className="text-red-400 hover:text-red-300 transition text-lg cursor-pointer"
                     >
                       ✕
                     </button>

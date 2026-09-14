@@ -39,6 +39,15 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
   - Create intermediate variables with fallbacks: `const value = apiField || 0;`
   - Never chain `.toFixed()` on potentially undefined values
   - Test all pages with incomplete API responses
+- ✅ **Hover Effects for All Clickable Elements** (September 14, 2026):
+  - Every interactive element must show cursor change on hover
+  - **Buttons**: Add `cursor-pointer` class
+  - **Dropdowns/Selects**: Add `cursor-pointer` + `hover:border-{accent}-400 hover:bg-{shade} focus:border-{accent}-400 focus:outline-none transition`
+  - **Text Inputs**: Add `cursor-text` + `hover:border-{accent}-400 hover:bg-{shade} focus:border-{accent}-400 focus:outline-none transition`
+  - **Color scheme**: Use `hover:border-purple-400` for general pages, `hover:border-green-400` for Investments
+  - **Background**: Use `hover:bg-slate-700` or `hover:bg-slate-600` depending on current shade
+  - Always include `transition` class for smooth 0.3s animations
+  - No exceptions: every click-able element must have clear hover feedback
 
 **Investment Tracking**:
 - ✅ Multi-account system: Brokerage, 401k, Roth IRA, Traditional IRA, HSA
@@ -269,18 +278,18 @@ Used for binary state toggles (e.g., Include Debt toggle):
 
 ### Form Elements
 
-**Input Field:**
+**Input Field (with Hover Effects):**
 ```tsx
 <input
   type="text"
-  className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:border-purple-400 focus:outline-none transition"
+  className="w-full px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-gray-500 cursor-text hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition"
   placeholder="Enter value"
 />
 ```
 
-**Select Dropdown:**
+**Select Dropdown (with Hover Effects):**
 ```tsx
-<select className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm">
+<select className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition">
   <option>Option</option>
 </select>
 ```
@@ -291,6 +300,64 @@ Used for binary state toggles (e.g., Include Debt toggle):
   {/* form fields */}
 </form>
 ```
+
+### Interactive Element Hover Effects
+
+**All clickable elements must provide clear visual feedback on hover:**
+
+**Button (Primary CTA):**
+```tsx
+<button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer">
+  Button Text
+</button>
+```
+
+**Button (Secondary/Filter):**
+```tsx
+<button className={`py-2 px-4 rounded-full border-2 font-medium transition cursor-pointer ${
+  isActive
+    ? "border-purple-400 bg-purple-500/20 text-purple-300"
+    : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+}`}>
+  Filter
+</button>
+```
+
+**Text Input:**
+```tsx
+<input
+  type="text"
+  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 cursor-text hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
+/>
+```
+
+**Select/Dropdown:**
+```tsx
+<select className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition">
+  <option>Option</option>
+</select>
+```
+
+**Navigation Link:**
+```tsx
+<Link to="/path" className="text-gray-300 hover:text-purple-400 font-medium transition cursor-pointer">
+  Link Text
+</Link>
+```
+
+**Icon/Delete Button:**
+```tsx
+<button onClick={() => handleDelete(id)} className="text-red-400 hover:text-red-300 transition cursor-pointer">
+  ✕
+</button>
+```
+
+**Hover Effect Color Scheme:**
+- **General Pages** (Dashboard, Transactions, Budgets, Savings): Use `hover:border-purple-400`
+- **Investments Page**: Use `hover:border-green-400`
+- **Background Highlights**: Use `hover:bg-slate-700` or `hover:bg-slate-600` depending on current background shade
+- **Always include** `transition` class for smooth 0.3s animations
+- **Always include** proper cursor class: `cursor-pointer` for buttons/clickables, `cursor-text` for inputs
 
 ### Progress Bars
 
@@ -673,8 +740,14 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 3. Use glow-card system for all containers
 4. Add to `App.tsx` imports
 5. Add route in `<Routes>`
-6. Add navigation link in nav menu
+6. Add navigation link in nav menu (with `cursor-pointer`)
 7. Update this CLAUDE.md with new color assignments if needed
+8. **CRITICAL**: Add hover effects to ALL interactive elements:
+   - All buttons: Add `cursor-pointer`
+   - All form inputs: Add `cursor-text` + `hover:border-{accent}-400 hover:bg-{shade}` + `focus:border-{accent}-400 focus:outline-none`
+   - All dropdowns/selects: Add `cursor-pointer` + `hover:border-{accent}-400 hover:bg-{shade}` + `focus:border-{accent}-400 focus:outline-none`
+   - All clickable elements: Add `cursor-pointer` + appropriate hover effects
+   - Always include `transition` class for smooth animations
 
 ### Adding a New Dashboard Card
 
@@ -683,6 +756,17 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 3. Add clickable navigation with arrow icon
 4. Match text sizing and spacing patterns
 5. Use interface definitions for data
+6. **Add hover effects**: Card automatically gets glow effect with `cursor-pointer`
+7. **Add arrow icon hover**: Use `group-hover:translate-x-1 transition` for arrow
+
+### Adding Form Inputs
+
+For any new form (add, edit, delete operations):
+
+1. All text inputs: Apply `cursor-text hover:border-{accent}-400 hover:bg-slate-600 focus:border-{accent}-400 focus:outline-none transition`
+2. All select/dropdowns: Apply `cursor-pointer hover:border-{accent}-400 hover:bg-slate-600 focus:border-{accent}-400 focus:outline-none transition`
+3. All buttons: Apply `cursor-pointer` to submit, cancel, and action buttons
+4. Test all hover states before submitting
 
 ### Adding a New Color Scheme
 
@@ -692,6 +776,7 @@ If adding a new feature needing a color:
 2. Add CSS variables to `<style>` tag
 3. Document in the Gradient & Glow Color System section
 4. Use consistently across all instances
+5. Apply correct accent color to hover effects (e.g., `hover:border-green-400` for green theme)
 
 ---
 

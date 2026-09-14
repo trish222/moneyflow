@@ -216,7 +216,7 @@ export default function Investments() {
         </div>
         <button
           onClick={() => setShowAccountForm(!showAccountForm)}
-          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition cursor-pointer"
         >
           {showAccountForm ? "Cancel" : "+ Add Account"}
         </button>
@@ -236,7 +236,7 @@ export default function Investments() {
                 required
                 value={newAccountName}
                 onChange={(e) => setNewAccountName(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition cursor-text"
                 placeholder="e.g., Fidelity Brokerage"
               />
             </div>
@@ -245,7 +245,7 @@ export default function Investments() {
               <select
                 value={newAccountType}
                 onChange={(e) => setNewAccountType(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
               >
                 {accountTypes.map((type) => (
                   <option key={type} value={type}>
@@ -257,7 +257,7 @@ export default function Investments() {
           </div>
           <button
             type="submit"
-            className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+            className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition cursor-pointer"
           >
             Create Account
           </button>
@@ -272,7 +272,7 @@ export default function Investments() {
             <select
               value={selectedAccountId || "all"}
               onChange={(e) => setSelectedAccountId(e.target.value === "all" ? null : Number(e.target.value))}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-gray-300 text-sm hover:border-green-400 focus:border-green-400 focus:outline-none transition"
+              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
             >
               <option value="all">All Accounts - Total Portfolio</option>
               {accounts.map((account) => (
@@ -285,7 +285,7 @@ export default function Investments() {
           {selectedAccountId && (
             <button
               onClick={() => handleDeleteAccount(selectedAccountId)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition cursor-pointer"
               title="Delete selected account"
             >
               Delete Account
@@ -349,7 +349,7 @@ export default function Investments() {
                     required
                     value={newInvName}
                     onChange={(e) => setNewInvName(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition cursor-text"
                     placeholder="e.g., Apple Stock"
                   />
                 </div>
@@ -358,7 +358,7 @@ export default function Investments() {
                   <select
                     value={newInvType}
                     onChange={(e) => setNewInvType(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
                   >
                     {investmentTypes.map((type) => (
                       <option key={type} value={type}>
@@ -375,7 +375,7 @@ export default function Investments() {
                     required
                     value={newInvValue}
                     onChange={(e) => setNewInvValue(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition cursor-text"
                     placeholder="0.00"
                   />
                 </div>
@@ -383,14 +383,14 @@ export default function Investments() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition cursor-pointer"
                 >
                   Add Investment
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowInvestmentForm(false)}
-                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition"
+                  className="flex-1 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -400,7 +400,7 @@ export default function Investments() {
           {!showInvestmentForm && (
             <button
               onClick={() => setShowInvestmentForm(true)}
-              className="mb-6 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition"
+              className="mb-6 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition cursor-pointer"
             >
               + Add Investment
             </button>
@@ -434,7 +434,7 @@ export default function Investments() {
                     </p>
                     <button
                       onClick={() => handleDeleteInvestment(investment.id)}
-                      className="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition text-lg"
+                      className="text-red-400 hover:text-red-300 opacity-0 group-hover:opacity-100 transition text-lg cursor-pointer"
                       title="Delete investment"
                     >
                       ✕

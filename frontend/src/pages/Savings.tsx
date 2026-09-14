@@ -106,7 +106,7 @@ export default function Savings() {
           <h1 className="text-4xl font-bold text-white">Savings Goals</h1>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
           >
             {showForm ? "Cancel" : "+ Add Goal"}
           </button>
@@ -129,7 +129,7 @@ export default function Savings() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="e.g., Emergency Fund"
                 />
               </div>
@@ -145,7 +145,7 @@ export default function Savings() {
                   onChange={(e) =>
                     setFormData({ ...formData, targetAmount: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="0.00"
                 />
               </div>
@@ -160,7 +160,7 @@ export default function Savings() {
                   onChange={(e) =>
                     setFormData({ ...formData, currentAmount: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="0.00"
                 />
               </div>
@@ -175,13 +175,13 @@ export default function Savings() {
                   onChange={(e) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                 />
               </div>
             </div>
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
             >
               Add Savings Goal
             </button>
@@ -225,7 +225,7 @@ export default function Savings() {
                     </div>
                     <button
                       onClick={() => handleDeleteGoal(goal.id)}
-                      className="text-red-400 hover:text-red-300 transition text-lg"
+                      className="text-red-400 hover:text-red-300 transition text-lg cursor-pointer"
                     >
                       ✕
                     </button>
@@ -250,7 +250,7 @@ export default function Savings() {
                       onClick={() =>
                         handleUpdateGoal(goal.id, goal.currentAmount + 50)
                       }
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition"
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
                     >
                       +$50
                     </button>
@@ -261,7 +261,7 @@ export default function Savings() {
                           Math.max(0, goal.currentAmount - 50)
                         )
                       }
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition"
+                      className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition cursor-pointer"
                     >
                       -$50
                     </button>

@@ -84,7 +84,7 @@ export default function Transactions() {
           <h1 className="text-4xl font-bold text-white">Transactions</h1>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
           >
             {showForm ? "Cancel" : "+ Add Transaction"}
           </button>
@@ -107,7 +107,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, amount: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="0.00"
                   required
                 />
@@ -122,7 +122,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
                 >
                   <option value="expense">Expense</option>
                   <option value="income">Income</option>
@@ -138,7 +138,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -158,7 +158,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
                   required
                 />
               </div>
@@ -166,7 +166,7 @@ export default function Transactions() {
 
             <button
               type="submit"
-              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition"
+              className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
             >
               Add Transaction
             </button>
@@ -233,7 +233,7 @@ export default function Transactions() {
                       <td className="px-6 py-4 text-center">
                         <button
                           onClick={() => handleDeleteTransaction(t.id)}
-                          className="text-red-400 hover:text-red-300 transition"
+                          className="text-red-400 hover:text-red-300 transition cursor-pointer"
                         >
                           ✕
                         </button>
