@@ -65,6 +65,12 @@ export default function Debt() {
           mask-composite: exclude;
           pointer-events: none;
           z-index: 10;
+          opacity: 0.7;
+          transition: opacity 0.3s ease;
+        }
+
+        .glow-card:hover::after {
+          opacity: 1;
         }
 
         .glow-card::before {
@@ -75,21 +81,21 @@ export default function Debt() {
           background: linear-gradient(135deg, var(--color-1), var(--color-2));
           z-index: -1;
           filter: blur(15px);
-          opacity: 0.3;
+          opacity: 0.08;
           transition: opacity 0.3s ease, filter 0.3s ease;
           pointer-events: none;
         }
 
         .glow-card:hover::before {
-          opacity: 0.6;
+          opacity: 0.35;
           filter: blur(25px);
         }
 
         .glow-blue {
-          --color-1: #00b4ff;
-          --color-2: #0066ff;
-          --glow-color: rgba(0, 180, 255, 0.8);
-          --glow-color-dim: rgba(0, 180, 255, 0.2);
+          --color-1: #00c8ff;
+          --color-2: #0055ff;
+          --glow-color: rgba(0, 200, 255, 0.8);
+          --glow-color-dim: rgba(0, 200, 255, 0.15);
         }
       `}</style>
 

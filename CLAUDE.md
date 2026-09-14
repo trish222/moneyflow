@@ -21,6 +21,11 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - ✅ Activity summary filters are on the **same line as welcome message** on desktop
 - ✅ **No layout shift** when changing filters - use fixed-height containers with `hidden` class instead of conditional rendering
 - ✅ Maintain responsive design with `lg:flex-row` for desktop, stacked on mobile
+- ✅ **Glow Card Effects** (September 14, 2026):
+  - Inner glow (::before): `opacity: 0.08` (normal - minimal color), `opacity: 0.35` (hover) - keeps cards clean, color appears only on interaction
+  - Border glow (::after): `opacity: 0.7` (normal), `opacity: 1` (hover) - vibrant borders with high contrast
+  - Each card type has distinct, vibrant color pair for visual variety
+  - Inner glow almost invisible at rest, becomes visible on hover for interactive feedback
 
 **Database & Data**:
 - ✅ Run seed script on fresh setup: `npx ts-node prisma/seed.ts`
@@ -87,29 +92,29 @@ Each component type has its own gradient and glow color for visual distinction:
 
 ```css
 /* Red/Orange - Net Worth */
---color-1: #ff6b6b;
---color-2: #ffa94d;
---glow-color: rgba(255, 107, 107, 0.8);
+--color-1: #ff5555;
+--color-2: #ffb366;
+--glow-color: rgba(255, 85, 85, 0.8);
 
 /* Cyan/Blue - Transactions, Dashboard */
---color-1: #00d9ff;
---color-2: #0099ff;
---glow-color: rgba(0, 217, 255, 0.8);
+--color-1: #00e5ff;
+--color-2: #0088ff;
+--glow-color: rgba(0, 229, 255, 0.8);
 
 /* Purple/Magenta - Budgeting */
---color-1: #c77dff;
---color-2: #ff006e;
---glow-color: rgba(199, 125, 255, 0.8);
+--color-1: #d580ff;
+--color-2: #ff1493;
+--glow-color: rgba(213, 128, 255, 0.8);
 
 /* Green - Investments */
---color-1: #00d97e;
---color-2: #00a86b;
---glow-color: rgba(0, 217, 126, 0.8);
+--color-1: #00ff88;
+--color-2: #00b366;
+--glow-color: rgba(0, 255, 136, 0.8);
 
 /* Blue - Debt */
---color-1: #00b4ff;
---color-2: #0066ff;
---glow-color: rgba(0, 180, 255, 0.8);
+--color-1: #00c8ff;
+--color-2: #0055ff;
+--glow-color: rgba(0, 200, 255, 0.8);
 ```
 
 ### Typography
@@ -175,7 +180,7 @@ The core component used throughout the app for any card-based content.
   z-index: 10;
 }
 
-/* Glow effect (blurred background) */
+/* Glow effect (blurred background) - minimal inner opacity */
 .glow-card::before {
   content: '';
   position: absolute;
@@ -184,14 +189,23 @@ The core component used throughout the app for any card-based content.
   background: linear-gradient(135deg, var(--color-1), var(--color-2));
   z-index: -1;
   filter: blur(15px);
-  opacity: 0.3;
+  opacity: 0.08;
   transition: opacity 0.3s ease, filter 0.3s ease;
   pointer-events: none;
 }
 
-/* Hover state - glow intensifies */
+/* Hover state - glow intensifies with border brightening */
+.glow-card::after {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.glow-card:hover::after {
+  opacity: 1;
+}
+
 .glow-card:hover::before {
-  opacity: 0.6;
+  opacity: 0.35;
   filter: blur(25px);
 }
 ```

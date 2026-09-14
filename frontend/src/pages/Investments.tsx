@@ -180,6 +180,12 @@ export default function Investments() {
           mask-composite: exclude;
           pointer-events: none;
           z-index: 10;
+          opacity: 0.7;
+          transition: opacity 0.3s ease;
+        }
+
+        .glow-card:hover::after {
+          opacity: 1;
         }
 
         .glow-card::before {
@@ -190,21 +196,21 @@ export default function Investments() {
           background: linear-gradient(135deg, var(--color-1), var(--color-2));
           z-index: -1;
           filter: blur(15px);
-          opacity: 0.3;
+          opacity: 0.08;
           transition: opacity 0.3s ease, filter 0.3s ease;
           pointer-events: none;
         }
 
         .glow-card:hover::before {
-          opacity: 0.6;
+          opacity: 0.35;
           filter: blur(25px);
         }
 
         .glow-green {
-          --color-1: #00d97e;
-          --color-2: #00a86b;
-          --glow-color: rgba(0, 217, 126, 0.8);
-          --glow-color-dim: rgba(0, 217, 126, 0.2);
+          --color-1: #00ff88;
+          --color-2: #00b366;
+          --glow-color: rgba(0, 255, 136, 0.8);
+          --glow-color-dim: rgba(0, 255, 136, 0.15);
         }
       `}</style>
 
