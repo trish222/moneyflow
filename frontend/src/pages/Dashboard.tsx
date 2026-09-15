@@ -152,7 +152,7 @@ export default function Dashboard() {
           background: rgba(10, 15, 30, 0.3);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border: 0.5px solid rgba(255, 255, 255, 0.12);
+          border: 0.3px solid rgba(255, 255, 255, 0.05);
           transition: all 0.3s ease;
           overflow: hidden;
         }

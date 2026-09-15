@@ -143,9 +143,9 @@ Use Tailwind's spacing scale consistently:
 
 ## Component Patterns
 
-### Glow Card System
+### Glow Card System (September 15, 2026 - Glassy Bubble Design)
 
-The core component used throughout the app for any card-based content.
+The core component used throughout the app for any card-based content. Features glassy transparent cards with vibrant bottom ombre glow, subtle colored borders, and elegant hover effects.
 
 **HTML Structure:**
 ```tsx
@@ -160,55 +160,72 @@ The core component used throughout the app for any card-based content.
   position: relative;
   border-radius: 1.5rem;
   padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(10, 15, 30, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.3px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-/* Gradient border effect */
+/* Muted colored border */
 .glow-card::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 1.5rem;
-  padding: 2px;
+  padding: 1px;
   background: linear-gradient(135deg, var(--color-1), var(--color-2));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   z-index: 10;
-}
-
-/* Glow effect (blurred background) - minimal inner opacity */
-.glow-card::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 1.5rem;
-  background: linear-gradient(135deg, var(--color-1), var(--color-2));
-  z-index: -1;
-  filter: blur(15px);
-  opacity: 0.08;
-  transition: opacity 0.3s ease, filter 0.3s ease;
-  pointer-events: none;
-}
-
-/* Hover state - glow intensifies with border brightening */
-.glow-card::after {
-  opacity: 0.7;
+  opacity: 0.35;
   transition: opacity 0.3s ease;
 }
 
 .glow-card:hover::after {
-  opacity: 1;
+  opacity: 0.6;
+}
+
+/* Bottom ombre glow + side accents + hover left-oval glow */
+.glow-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
 }
 
 .glow-card:hover::before {
-  opacity: 0.35;
-  filter: blur(25px);
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 60% 120% at -10% 50%, var(--glow-color-dim) 0%, rgba(0, 0, 0, 0.3) 30%, transparent 45%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
 }
 ```
+
+**Glow Card Features:**
+- **Glassy transparent background** — `rgba(10, 15, 30, 0.3)` with 20px backdrop blur
+- **Ultra-thin border** — 0.3px subtle white border for minimal visual weight
+- **Muted border glow** — Tinted gradient borders (0.35 opacity, 0.6 on hover)
+- **Bottom ombre glow** — White-to-color gradient from bottom edge, fades upward
+- **Side glow accents** — Subtle colored glows at bottom-left and bottom-right corners
+- **Hover left-oval effect** — Darker oval glow from left side that extends to top/bottom edges
 
 **Color Class Definitions:**
 ```css
@@ -396,13 +413,18 @@ Color variations based on progress:
 
 ### Page Container
 
-All pages use this consistent structure with dark ombre background:
+All pages use this consistent structure with pure black background (September 15, 2026):
 
 ```tsx
-<div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
+<div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
   {/* page content */}
 </div>
 ```
+
+**Background Details:**
+- Uses pure black (#000000) at corners with minimal grey (#0f0f0f) in center
+- Creates subtle depth without color hue (no purple/blue undertones)
+- Pairs perfectly with glassy cards and vibrant glow effects
 
 ### Responsive Grid
 
