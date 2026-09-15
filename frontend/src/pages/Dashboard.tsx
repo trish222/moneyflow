@@ -152,7 +152,7 @@ export default function Dashboard() {
           background: rgba(10, 15, 30, 0.3);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.12);
+          border: 0.5px solid rgba(255, 255, 255, 0.12);
           transition: all 0.3s ease;
           overflow: hidden;
         }
@@ -165,19 +165,19 @@ export default function Dashboard() {
           right: 0;
           bottom: 0;
           border-radius: 1.5rem;
-          padding: 2px;
+          padding: 1px;
           background: linear-gradient(135deg, var(--color-1), var(--color-2));
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor;
           mask-composite: exclude;
           pointer-events: none;
           z-index: 10;
-          opacity: 0.75;
+          opacity: 0.35;
           transition: opacity 0.3s ease;
         }
 
         .glow-card:hover::after {
-          opacity: 1;
+          opacity: 0.6;
         }
 
         .glow-card::before {
