@@ -200,6 +200,12 @@ export default function Dashboard() {
 
         .glow-card:hover::before {
           opacity: 1;
+          background:
+            radial-gradient(ellipse 60% 120% at -10% 50%, var(--glow-color) 0%, var(--glow-color-dim) 20%, transparent 45%),
+            linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+            radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+            radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+            linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
         }
 
         .glow-red {
