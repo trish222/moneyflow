@@ -93,7 +93,7 @@ export default function Transactions() {
         {showForm && (
           <form
             onSubmit={handleAddTransaction}
-            className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-6 mb-8 space-y-4"
+            className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -107,7 +107,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, amount: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="0.00"
                   required
                 />
@@ -122,7 +122,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition"
                 >
                   <option value="expense">Expense</option>
                   <option value="income">Income</option>
@@ -138,7 +138,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -158,7 +158,7 @@ export default function Transactions() {
                   onChange={(e) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition cursor-text"
                   required
                 />
               </div>
@@ -178,7 +178,7 @@ export default function Transactions() {
             <p className="text-gray-400">Loading transactions...</p>
           </div>
         ) : (
-          <div className="bg-slate-800/50 border border-purple-500/30 rounded-xl overflow-hidden">
+          <div className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl overflow-hidden">
             {transactions.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-400">No transactions yet</p>

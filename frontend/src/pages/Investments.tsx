@@ -160,8 +160,10 @@ export default function Investments() {
           position: relative;
           border-radius: 1.5rem;
           padding: 1.5rem;
-          background: rgba(15, 23, 42, 0.8);
-          backdrop-filter: blur(10px);
+          background: rgba(15, 23, 42, 0.4);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
           transition: all 0.3s ease;
         }
 
@@ -180,30 +182,31 @@ export default function Investments() {
           mask-composite: exclude;
           pointer-events: none;
           z-index: 10;
-          opacity: 0.7;
+          opacity: 0.5;
           transition: opacity 0.3s ease;
+          filter: blur(1px);
         }
 
         .glow-card:hover::after {
-          opacity: 1;
+          opacity: 0.85;
         }
 
         .glow-card::before {
           content: '';
           position: absolute;
-          inset: -8px;
+          inset: -12px;
           border-radius: 1.5rem;
           background: linear-gradient(135deg, var(--color-1), var(--color-2));
           z-index: -1;
-          filter: blur(15px);
-          opacity: 0.08;
+          filter: blur(20px);
+          opacity: 0.05;
           transition: opacity 0.3s ease, filter 0.3s ease;
           pointer-events: none;
         }
 
         .glow-card:hover::before {
-          opacity: 0.35;
-          filter: blur(25px);
+          opacity: 0.25;
+          filter: blur(30px);
         }
 
         .glow-green {
@@ -232,7 +235,7 @@ export default function Investments() {
       {showAccountForm && (
         <form
           onSubmit={handleAddAccount}
-          className="bg-slate-800/50 border border-green-500/30 rounded-xl p-6 mb-8 space-y-4"
+          className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -242,7 +245,7 @@ export default function Investments() {
                 required
                 value={newAccountName}
                 onChange={(e) => setNewAccountName(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition cursor-text"
+                className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition cursor-text"
                 placeholder="e.g., Fidelity Brokerage"
               />
             </div>
@@ -251,7 +254,7 @@ export default function Investments() {
               <select
                 value={newAccountType}
                 onChange={(e) => setNewAccountType(e.target.value)}
-                className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
+                className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition"
               >
                 {accountTypes.map((type) => (
                   <option key={type} value={type}>
@@ -278,7 +281,7 @@ export default function Investments() {
             <select
               value={selectedAccountId || "all"}
               onChange={(e) => setSelectedAccountId(e.target.value === "all" ? null : Number(e.target.value))}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
+              className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition"
             >
               <option value="all">All Accounts - Total Portfolio</option>
               {accounts.map((account) => (
@@ -345,7 +348,7 @@ export default function Investments() {
           {showInvestmentForm && (
             <form
               onSubmit={handleAddInvestment}
-              className="bg-slate-800/50 border border-green-500/30 rounded-xl p-6 mb-8 space-y-4"
+              className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
             >
               <div className="grid grid-cols-3 gap-4">
                 <div>
@@ -355,7 +358,7 @@ export default function Investments() {
                     required
                     value={newInvName}
                     onChange={(e) => setNewInvName(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition cursor-text"
+                    className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition cursor-text"
                     placeholder="e.g., Apple Stock"
                   />
                 </div>
@@ -364,7 +367,7 @@ export default function Investments() {
                   <select
                     value={newInvType}
                     onChange={(e) => setNewInvType(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
+                    className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition"
                   >
                     {investmentTypes.map((type) => (
                       <option key={type} value={type}>
@@ -381,7 +384,7 @@ export default function Investments() {
                     required
                     value={newInvValue}
                     onChange={(e) => setNewInvValue(e.target.value)}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition cursor-text"
+                    className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition cursor-text"
                     placeholder="0.00"
                   />
                 </div>

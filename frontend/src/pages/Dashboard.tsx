@@ -143,14 +143,16 @@ export default function Dashboard() {
     : metrics.availableFunds;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-8">
       <style>{`
         .glow-card {
           position: relative;
           border-radius: 1.5rem;
           padding: 1.5rem;
-          background: rgba(15, 23, 42, 0.8);
-          backdrop-filter: blur(10px);
+          background: rgba(5, 10, 25, 0.5);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
           transition: all 0.3s ease;
         }
 
@@ -169,7 +171,7 @@ export default function Dashboard() {
           mask-composite: exclude;
           pointer-events: none;
           z-index: 10;
-          opacity: 0.7;
+          opacity: 0.75;
           transition: opacity 0.3s ease;
         }
 
@@ -184,8 +186,8 @@ export default function Dashboard() {
           border-radius: 1.5rem;
           background: linear-gradient(135deg, var(--color-1), var(--color-2));
           z-index: -1;
-          filter: blur(15px);
-          opacity: 0.08;
+          filter: blur(18px);
+          opacity: 0.12;
           transition: opacity 0.3s ease, filter 0.3s ease;
           pointer-events: none;
         }
@@ -316,10 +318,10 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-2 lg:justify-end">
           <button
             onClick={() => setFilterType("day")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
               filterType === "day"
-                ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+                ? "border-purple-400 bg-purple-500/15 text-purple-300"
+                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
             }`}
           >
             Day
@@ -327,10 +329,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("week")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
               filterType === "week"
-                ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+                ? "border-purple-400 bg-purple-500/15 text-purple-300"
+                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
             }`}
           >
             Week
@@ -338,10 +340,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("month")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
               filterType === "month"
-                ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+                ? "border-purple-400 bg-purple-500/15 text-purple-300"
+                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
             }`}
           >
             Month
@@ -349,10 +351,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("year")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
               filterType === "year"
-                ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+                ? "border-purple-400 bg-purple-500/15 text-purple-300"
+                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
             }`}
           >
             Year
@@ -360,10 +362,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("all")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer ${
+            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
               filterType === "all"
-                ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+                ? "border-purple-400 bg-purple-500/15 text-purple-300"
+                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
             }`}
           >
             All Time
@@ -376,7 +378,7 @@ export default function Dashboard() {
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition ${
+          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 focus:border-purple-400 focus:outline-none transition ${
             filterType === "day" || filterType === "week" ? "" : "hidden"
           }`}
         >
@@ -389,7 +391,7 @@ export default function Dashboard() {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition ${
+          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 focus:border-purple-400 focus:outline-none transition ${
             filterType === "week" || filterType === "month" ? "" : "hidden"
           }`}
         >
@@ -402,7 +404,7 @@ export default function Dashboard() {
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition ${
+          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 focus:border-purple-400 focus:outline-none transition ${
             filterType === "week" || filterType === "month" || filterType === "year" ? "" : "hidden"
           }`}
         >

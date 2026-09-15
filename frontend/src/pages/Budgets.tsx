@@ -97,7 +97,7 @@ export default function Budgets() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
-            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition"
+            className="px-4 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 font-medium cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 transition"
           >
             {months.map((m, i) => (
               <option key={m} value={i + 1}>
@@ -108,7 +108,7 @@ export default function Budgets() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 font-medium cursor-pointer hover:border-purple-400 hover:bg-slate-700 transition"
+            className="px-4 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 font-medium cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 transition"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -121,7 +121,7 @@ export default function Budgets() {
         {showForm && (
           <form
             onSubmit={handleAddBudget}
-            className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-6 mb-8 space-y-4"
+            className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
           >
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -133,7 +133,7 @@ export default function Budgets() {
                   onChange={(e) =>
                     setFormData({ ...formData, category: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition"
                 >
                   {categories.map((c) => (
                     <option key={c} value={c}>
@@ -154,7 +154,7 @@ export default function Budgets() {
                   onChange={(e) =>
                     setFormData({ ...formData, limit: e.target.value })
                   }
-                  className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-500 hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition cursor-text"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition cursor-text"
                   placeholder="0.00"
                 />
               </div>
@@ -196,7 +196,7 @@ export default function Budgets() {
               return (
                 <div
                   key={budget.id}
-                  className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-6 hover:shadow-lg hover:shadow-purple-500/20 transition"
+                  className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 hover:border-white/20 transition"
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div>
