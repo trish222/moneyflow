@@ -143,17 +143,18 @@ export default function Dashboard() {
     : metrics.availableFunds;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
       <style>{`
         .glow-card {
           position: relative;
           border-radius: 1.5rem;
           padding: 1.5rem;
-          background: rgba(5, 10, 25, 0.5);
+          background: rgba(10, 15, 30, 0.3);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.12);
           transition: all 0.3s ease;
+          overflow: hidden;
         }
 
         .glow-card::after {
@@ -182,19 +183,19 @@ export default function Dashboard() {
         .glow-card::before {
           content: '';
           position: absolute;
-          inset: -8px;
-          border-radius: 1.5rem;
-          background: linear-gradient(135deg, var(--color-1), var(--color-2));
-          z-index: -1;
-          filter: blur(18px);
-          opacity: 0.12;
-          transition: opacity 0.3s ease, filter 0.3s ease;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 100%;
+          background: linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 25%, transparent 60%);
+          z-index: 1;
           pointer-events: none;
+          opacity: 0.4;
+          transition: opacity 0.3s ease;
         }
 
         .glow-card:hover::before {
-          opacity: 0.35;
-          filter: blur(25px);
+          opacity: 0.75;
         }
 
         .glow-red {
