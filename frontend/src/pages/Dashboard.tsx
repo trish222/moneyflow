@@ -316,6 +316,37 @@ export default function Dashboard() {
             grid-template-columns: 1fr;
           }
         }
+
+        /* Filter Button Glow Effects - Purple inner bottom glow */
+        .filter-btn {
+          position: relative;
+          overflow: hidden;
+          z-index: 1;
+        }
+
+        .filter-btn::before {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 100%;
+          background:
+            linear-gradient(to top, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 3%, transparent 10%),
+            linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 15%, transparent 50%);
+          z-index: -1;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .filter-btn.active::before {
+          opacity: 0.9;
+        }
+
+        .filter-btn:hover::before {
+          opacity: 0.7;
+        }
       `}</style>
 
       {/* Header */}
@@ -329,10 +360,10 @@ export default function Dashboard() {
         <div className="flex flex-wrap gap-2 lg:justify-end">
           <button
             onClick={() => setFilterType("day")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
+            className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
               filterType === "day"
-                ? "border-purple-400 bg-purple-500/15 text-purple-300"
-                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
+                ? "active border-white bg-white/10 text-white"
+                : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
             }`}
           >
             Day
@@ -340,10 +371,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("week")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
+            className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
               filterType === "week"
-                ? "border-purple-400 bg-purple-500/15 text-purple-300"
-                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
+                ? "active border-white bg-white/10 text-white"
+                : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
             }`}
           >
             Week
@@ -351,10 +382,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("month")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
+            className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
               filterType === "month"
-                ? "border-purple-400 bg-purple-500/15 text-purple-300"
-                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
+                ? "active border-white bg-white/10 text-white"
+                : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
             }`}
           >
             Month
@@ -362,10 +393,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("year")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
+            className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
               filterType === "year"
-                ? "border-purple-400 bg-purple-500/15 text-purple-300"
-                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
+                ? "active border-white bg-white/10 text-white"
+                : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
             }`}
           >
             Year
@@ -373,10 +404,10 @@ export default function Dashboard() {
 
           <button
             onClick={() => setFilterType("all")}
-            className={`py-2 px-3 rounded-full border-2 font-medium transition text-sm cursor-pointer backdrop-blur-md ${
+            className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
               filterType === "all"
-                ? "border-purple-400 bg-purple-500/15 text-purple-300"
-                : "border-white/15 text-gray-300 hover:border-purple-400/50 hover:bg-white/5"
+                ? "active border-white bg-white/10 text-white"
+                : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
             }`}
           >
             All Time
@@ -389,7 +420,7 @@ export default function Dashboard() {
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 focus:border-purple-400 focus:outline-none transition ${
+          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-white hover:bg-white/10  focus:border-purple-400 focus:outline-none transition ${
             filterType === "day" || filterType === "week" ? "" : "hidden"
           }`}
         >
@@ -402,7 +433,7 @@ export default function Dashboard() {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 focus:border-purple-400 focus:outline-none transition ${
+          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-white hover:bg-white/10  focus:border-purple-400 focus:outline-none transition ${
             filterType === "week" || filterType === "month" ? "" : "hidden"
           }`}
         >
@@ -415,7 +446,7 @@ export default function Dashboard() {
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400/50 hover:bg-slate-700/40 focus:border-purple-400 focus:outline-none transition ${
+          className={`px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-white hover:bg-white/10  focus:border-purple-400 focus:outline-none transition ${
             filterType === "week" || filterType === "month" || filterType === "year" ? "" : "hidden"
           }`}
         >
@@ -647,7 +678,7 @@ export default function Dashboard() {
                         setSelectedAccountId(e.target.value === "all" ? null : Number(e.target.value));
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-green-300 text-sm font-medium cursor-pointer hover:border-green-400 hover:bg-slate-600 focus:border-green-400 focus:outline-none transition"
+                      className="w-full px-3 py-2 bg-slate-800/40 backdrop-blur-lg border border-white/10 rounded-lg text-green-300 text-sm font-medium cursor-pointer hover:border-green-400/50 hover:bg-slate-700/40 focus:border-green-400 focus:outline-none transition"
                     >
                       <option value="all">All Accounts - Total Portfolio</option>
                       {investmentAccounts.map((account) => (
