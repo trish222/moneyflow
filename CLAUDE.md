@@ -21,11 +21,17 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - ✅ Activity summary filters are on the **same line as welcome message** on desktop
 - ✅ **No layout shift** when changing filters - use fixed-height containers with `hidden` class instead of conditional rendering
 - ✅ Maintain responsive design with `lg:flex-row` for desktop, stacked on mobile
-- ✅ **Glow Card Effects** (September 14, 2026):
-  - Inner glow (::before): `opacity: 0.08` (normal - minimal color), `opacity: 0.35` (hover) - keeps cards clean, color appears only on interaction
-  - Border glow (::after): `opacity: 0.7` (normal), `opacity: 1` (hover) - vibrant borders with high contrast
+- ✅ **Glow Card Effects** (September 14-15, 2026):
+  - Inner glow (::before): White-to-color ombre gradient from bottom, fades upward
+  - Border glow (::after): `opacity: 0.35` (normal), `opacity: 0.6` (hover) - subtle colored borders
+  - Side glow accents at bottom corners with left-oval hover effect
   - Each card type has distinct, vibrant color pair for visual variety
-  - Inner glow almost invisible at rest, becomes visible on hover for interactive feedback
+- ✅ **Filter Button Styling** (September 15, 2026):
+  - White borders (1px) with white/10 background
+  - Inner white ombre glow using ::before pseudo-element (matches glow cards)
+  - Active state: Full glow opacity (0.9), white text and border
+  - Hover state: Subtle glow (0.7 opacity) on inactive buttons
+  - Uses `filter-btn` class with positioned ::before element
 
 **Database & Data**:
 - ✅ Run seed script on fresh setup: `npx ts-node prisma/seed.ts`
@@ -343,16 +349,56 @@ Used for binary state toggles (e.g., Include Debt toggle):
 </button>
 ```
 
-**Button (Secondary/Filter):**
+**Button (Secondary/Filter - with Inner Glow, September 15, 2026):**
 ```tsx
-<button className={`py-2 px-4 rounded-full border-2 font-medium transition cursor-pointer ${
+<button className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
   isActive
-    ? "border-purple-400 bg-purple-500/20 text-purple-300"
-    : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+    ? "active border-white bg-white/10 text-white"
+    : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
 }`}>
   Filter
 </button>
 ```
+
+**CSS for Filter Buttons (white inner ombre glow):**
+```css
+.filter-btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.filter-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 3%, transparent 10%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 15%, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.filter-btn.active::before {
+  opacity: 0.9;
+}
+
+.filter-btn:hover::before {
+  opacity: 0.7;
+}
+```
+
+**Filter Button Features:**
+- **White borders** — Clean, minimal 1px borders
+- **Inner white ombre glow** — Matches glow card design, white gradient from bottom fading upward
+- **Active state** — White border, white/10 background, full opacity glow (0.9)
+- **Hover state** — Subtle glow on inactive buttons (0.7 opacity)
+- **Responsive** — Uses `backdrop-blur-md` for glass effect, matches card aesthetic
 
 **Text Input:**
 ```tsx
