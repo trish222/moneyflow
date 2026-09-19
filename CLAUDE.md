@@ -1,5 +1,41 @@
 # MoneyFlow - Design & Implementation Guidelines
 
+## ⚠️ PROJECT GUIDELINES & RULES
+
+### Core Requirements & Specifications
+
+**MANDATORY:** Before writing any code, designing components, or fixing bugs, you MUST read and strictly adhere to:
+
+1. **`MONEYFLOW_SPEC.md`** — The authoritative technical specification
+   - Read this FIRST for any feature work
+   - All requirements, data models, API endpoints, and acceptance criteria defined here
+   - Reference specific sections in PRs/commits (e.g., "Per MONEYFLOW_SPEC.md (API Design section)...")
+
+2. **`HANDOFF.md`** — Session context and decisions
+   - Quick orientation (5 min read)
+   - Open questions and constraints
+   - Implementation checklist
+
+### Implementation Rules
+
+- ✅ **Before starting ANY feature:** Read the corresponding section in `MONEYFLOW_SPEC.md`
+- ✅ **All features** must match the spec's requirements, data model, and acceptance criteria exactly
+- ✅ **All API endpoints** must follow the spec's endpoint definitions (methods, parameters, response formats)
+- ✅ **All database changes** must align with the Prisma schema in the spec
+- ✅ **All components** must use the glow card system and styling rules from CLAUDE.md (Design System section)
+- ✅ **All forms & inputs** must have hover/focus states per spec requirements
+- ✅ **Testing** must cover the test scenarios defined in MONEYFLOW_SPEC.md (Testing Plan section)
+- ✅ **PRs must reference** the spec section they implement (e.g., "Implements MONEYFLOW_SPEC.md > Features > Recurring Transactions")
+
+### If Something Conflicts with CLAUDE.md
+
+The specification documents take precedence in this order:
+1. **MONEYFLOW_SPEC.md** (MVP requirements, features, technical design)
+2. **HANDOFF.md** (session decisions, open questions)
+3. **CLAUDE.md** (existing design system, patterns, conventions)
+
+---
+
 ## Project Overview
 
 MoneyFlow is a modern financial tracker application with a sleek dark theme, responsive design, and interactive dashboard. Built with React, TypeScript, Tailwind CSS, and Vite.
