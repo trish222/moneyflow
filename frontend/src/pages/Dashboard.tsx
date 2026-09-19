@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiCall } from "../utils/api";
 
 interface DashboardMetrics {
   netWorth?: number;
@@ -67,26 +68,26 @@ export default function Dashboard() {
         url += `?week=${Math.ceil((date.getDate() + new Date(date.getFullYear(), date.getMonth(), 1).getDay()) / 7)}&month=${selectedMonth}&year=${selectedYear}`;
       }
 
-      const metricsResponse = await fetch(url);
+      const metricsResponse = await apiCall(url.replace("http://localhost:3000/api", ""));
       const metricsData = await metricsResponse.json();
       setMetrics(metricsData);
 
-      const transactionsResponse = await fetch("http://localhost:3000/api/transactions");
+      const transactionsResponse = await apiCall("/transactions");
       const transactionsData = await transactionsResponse.json();
       setTransactions(transactionsData.slice(0, 5));
 
-      const budgetsResponse = await fetch(`http://localhost:3000/api/budgets?month=${selectedMonth}&year=${selectedYear}`);
+      const budgetsResponse = await apiCall(`/budgets?month=${selectedMonth}&year=${selectedYear}`);
       const budgetsData = await budgetsResponse.json();
       setBudgets(budgetsData.slice(0, 3));
 
-      const accountsResponse = await fetch("http://localhost:3000/api/investment-accounts");
+      const accountsResponse = await apiCall("/investment-accounts");
       const accountsData = await accountsResponse.json();
 
       // Fetch investment details for each account
       const accountsWithInvestments = await Promise.all(
         accountsData.map(async (account: InvestmentAccount) => {
           try {
-            const invResponse = await fetch(`http://localhost:3000/api/investment-accounts/${account.id}`);
+            const invResponse = await apiCall(`/investment-accounts/${account.id}`);
             const fullAccount = await invResponse.json();
             return fullAccount;
           } catch {

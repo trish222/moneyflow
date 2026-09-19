@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { apiCall } from "../utils/api";
 
 interface Transaction {
   id: number;
@@ -57,7 +58,7 @@ export default function Transactions() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/transactions");
+      const response = await apiCall("/transactions");
       const data = await response.json();
       setTransactions(data);
     } catch (error) {
@@ -70,9 +71,8 @@ export default function Transactions() {
   const handleAddTransaction = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/api/transactions", {
+      const response = await apiCall("/transactions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           amount: parseFloat(formData.amount),
@@ -95,10 +95,7 @@ export default function Transactions() {
 
   const handleDeleteTransaction = async (id: number) => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/transactions/${id}`,
-        { method: "DELETE" }
-      );
+      const response = await apiCall(`/transactions/${id}`, { method: "DELETE" });
       if (response.ok) {
         fetchTransactions();
       }
