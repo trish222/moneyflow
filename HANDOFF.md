@@ -1,3 +1,51 @@
+⚠️ **CRITICAL: Before starting implementation in any session, read and follow [MONEYFLOW_SPEC.md](./MONEYFLOW_SPEC.md) first.** The spec document is the authoritative source for all requirements, API design, data model, error handling, and testing strategy. This handoff file contains session context only; the spec is the source of truth for building.
+
+---
+
+## 🔄 Handoff Update Protocol (End of Each Session)
+
+**When you say "update the handoff file" or wrap up a session**, follow this process:
+
+1. **✅ Check Off Completed Work**
+   - Find the relevant task/section in this file (e.g., "Day 1: Foundation")
+   - Mark completed items with `[x]` (e.g., `[x] Auth endpoints implemented`)
+   - Add commit hash reference if a PR/commit was made (e.g., `[x] Auth endpoints (commit a1b2c3d)`)
+
+2. **📝 Document What's Left**
+   - In the "Open Questions" or "Next Steps" section, add/update what remains
+   - Be specific: not just "Transactions need work" but "Transactions CRUD endpoints done, frontend form validation pending, tests need 3 more cases"
+   - Note any blockers, unexpected issues, or decisions made that affect next steps
+
+3. **💡 Add Context for Next Session**
+   - What tests are passing/failing?
+   - What edge cases came up?
+   - Any branches or WIP code to be aware of?
+   - Performance observations?
+   - Security findings?
+
+4. **🎯 Update Priorities if Needed**
+   - If scope changed or something took longer, note it
+   - Adjust remaining timeline if realistic estimate changed
+
+**Example of good handoff update:**
+```
+### Day 3 Progress (September 20)
+- [x] Transactions CRUD endpoints (commit a1b2c3d)
+- [x] Transactions frontend page basic layout
+- [ ] Search/filter implementation (50% done — query params working, UI filtering logic pending)
+- [ ] Dashboard metrics endpoint (blocked: need Account balance calculation verified first)
+
+**Next Session:**
+- Finish transaction filters (2h)
+- Verify account balance updates on transaction create/delete (1h, might have edge case)
+- Dashboard metrics endpoint (2h)
+- Start recurring transactions manual endpoint (2h)
+
+**Notes:** Transaction amount validation working well. Found N+1 query issue in Prisma include — need to refactor. Deployment to staging ready but holding until more features complete.
+```
+
+---
+
 # MoneyFlow Session Handoff (September 19, 2026)
 
 ## Goal
@@ -138,6 +186,103 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - No sensitive data in logs
 - bcrypt password hashing (10 rounds minimum)
 - Rate limiting on auth endpoints (5 attempts per 15 min)
+
+---
+
+## Session Progress (September 19 - Spec & Planning)
+
+### ✅ Completed This Session
+
+- [x] Gathered detailed requirements through interactive Q&A
+- [x] Created **MONEYFLOW_SPEC.md** — comprehensive, pragmatic spec for 1-2 week solo developer MVP
+- [x] Defined MVP scope: **Auth + Dashboard + Transactions** (core focus only)
+- [x] Deferred to Phase 2: Budgets, Investments, Reports, Cron scheduler (manual endpoint only)
+- [x] Finalized auth strategy: JWT tokens in response body + Authorization header (web/desktop-PWA/mobile compatible)
+- [x] Finalized data handling: Always include all fields, use null for missing (predictable responses)
+- [x] Finalized error handling: Structured envelope with error codes + HTTP status codes
+- [x] Finalized testing strategy: Unit tests (Jest) + critical path E2E (Playwright)
+- [x] Added critical note to HANDOFF.md directing to MONEYFLOW_SPEC.md
+- [x] Added Handoff Update Protocol for smooth session handoffs
+- [x] Database schema updated in spec (User, Transaction, RecurringTransaction, Budget models)
+- [x] Complete API specification documented (12+ endpoints with examples)
+- [x] Backend implementation patterns provided (auth service, middleware, error handling)
+- [x] Frontend patterns provided (TypeScript interfaces, auth context, form validation)
+- [x] 7-day development roadmap created (Day 1-7 breakdown)
+
+### 📝 What's Left to Do (Next Session - Implementation)
+
+**Priority 1: Day 1 (Foundation)**
+- [ ] Run Prisma migration to add User, RecurringTransaction, Budget models
+- [ ] Implement auth service (password hashing, JWT generation, token validation)
+- [ ] Implement auth endpoints (POST /auth/register, /auth/login, /auth/refresh)
+- [ ] Implement auth middleware (JWT verification on protected routes)
+- [ ] Set up error handling middleware (structured responses)
+- [ ] Basic test for auth service (password hashing, token generation)
+
+**Priority 2: Day 2 (Accounts & Core Pages)**
+- [ ] Implement Account CRUD endpoints (GET, POST, PUT, DELETE /accounts)
+- [ ] Create Login.tsx page (email/password form, error handling)
+- [ ] Create Register.tsx page (email/password/name form, validation)
+- [ ] Create Dashboard.tsx skeleton (metrics placeholder)
+- [ ] Implement Transaction CRUD endpoints (GET /transactions with filters, POST, PUT, DELETE)
+- [ ] Create Transactions.tsx page (CRUD form + list view)
+- [ ] Link frontend to backend (auth context, token storage, API calls)
+
+**Priority 3: Day 3-4 (Recurring & Polish)**
+- [ ] Implement RecurringTransaction CRUD endpoints
+- [ ] Implement POST /recurring/:id/create-once endpoint (manual transaction creation)
+- [ ] Implement Dashboard metrics endpoint (GET /dashboard/metrics)
+- [ ] Build Dashboard UI (net worth, available funds, recent transactions, upcoming recurring)
+- [ ] Error handling throughout (validation, 401/403/404, rate limiting setup)
+- [ ] Account balance updates on transaction create/delete
+
+**Priority 4: Day 5-7 (Testing & Deployment)**
+- [ ] Unit tests for auth service, transaction calculations
+- [ ] Integration tests for critical paths (register → login → add transaction)
+- [ ] E2E test (sign up → add account → add transaction → view dashboard)
+- [ ] Deploy to staging environment
+- [ ] Deploy to production
+- [ ] Write deployment guide / README updates
+
+### 💡 Key Context for Next Session
+
+**Architecture Decisions Made:**
+- JWT tokens in response body (not httpOnly cookies) to support web/desktop-PWA/mobile
+- Always include all fields in API responses (null for missing) — predictable frontend
+- Hard delete on user request (no soft deletes for MVP)
+- Multi-user fully isolated (every query filters by userId)
+- Recurring transactions: manual endpoint only; defer cron job to Phase 2
+
+**Database Considerations:**
+- Add indexes on User.email, Account.userId, Transaction.userId
+- RecurringTransaction.nextDue calculation needs careful handling for monthly/weekly/daily frequencies
+- Account balance must update atomically with transaction create/update/delete
+
+**Frontend Considerations:**
+- Token storage: localStorage for web/desktop-PWA (same-origin only)
+- Auth context wrapper for entire app (manage token refresh)
+- All API calls need Authorization header
+- Form validation before submit (email format, password strength, amount > 0)
+
+**Testing Coverage:**
+- Auth: register (valid/duplicate email, weak password), login (valid/invalid), token refresh
+- Transactions: CRUD, filters, account balance updates
+- Recurring: create with various frequencies, manual create-once
+- Dashboard: metrics calculation, recent transactions list
+- Errors: 400/401/403/404/409/429 with proper error codes and messages
+
+**Performance Note:**
+- Not a priority for MVP, but avoid N+1 queries from day one (use Prisma include/select properly)
+- No query optimization yet; focus on correct queries first
+
+**Security Note:**
+- Password requirements enforced on register: 8+ chars, uppercase, lowercase, digit, special char
+- Rate limiting on login: 5 failed attempts = 15 min lockout (not yet implemented but architecture ready)
+- No passwordHash returned in API responses
+
+**Blockers/Risks:**
+- None identified; spec is clear and actionable
+- Tight 1-2 week timeline requires focused implementation (MVP scope only)
 
 ---
 
