@@ -10,6 +10,12 @@ interface Transaction {
   date?: string;
 }
 
+interface Account {
+  id: number;
+  name: string;
+  balance?: number;
+}
+
 interface CategoryData {
   name: string;
   value: number;
@@ -17,10 +23,21 @@ interface CategoryData {
 
 export default function Transactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
+  const [showBalanceAdjust, setShowBalanceAdjust] = useState(false);
   const [breakdownType, setBreakdownType] = useState<"expense" | "income">("expense");
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
+  const [csvFile, setCSVFile] = useState<File | null>(null);
+  const [csvLoading, setCSVLoading] = useState(false);
+  const [csvError, setCSVError] = useState<string | null>(null);
+  const [balanceData, setBalanceData] = useState({
+    balance: "",
+    date: new Date().toISOString().split("T")[0],
+  });
   const [formData, setFormData] = useState({
     amount: "",
     type: "expense",
@@ -32,11 +49,23 @@ export default function Transactions() {
 
   useEffect(() => {
     fetchTransactions();
+    fetchAccounts();
   }, []);
 
   useEffect(() => {
     calculateCategoryBreakdown();
   }, [transactions, breakdownType]);
+
+  const fetchAccounts = async () => {
+    try {
+      const response = await apiCall("/accounts");
+      const data = await response.json();
+      setAccounts(data);
+      if (data.length > 0) setSelectedAccount(data[0].id);
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+    }
+  };
 
   const calculateCategoryBreakdown = () => {
     const breakdown: { [key: string]: number } = {};
@@ -101,6 +130,80 @@ export default function Transactions() {
       }
     } catch (error) {
       console.error("Error deleting transaction:", error);
+    }
+  };
+
+  const handleCSVImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!csvFile || !selectedAccount) {
+      setCSVError("Please select a file and account");
+      return;
+    }
+
+    try {
+      setCSVLoading(true);
+      setCSVError(null);
+      const formDataObj = new FormData();
+      formDataObj.append("file", csvFile);
+      formDataObj.append("accountId", selectedAccount.toString());
+
+      const response = await apiCall("/transactions/import-csv", {
+        method: "POST",
+        body: formDataObj,
+        headers: {}, // Let the browser set Content-Type for multipart/form-data
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setCSVFile(null);
+        setShowCSVImport(false);
+        fetchTransactions();
+        alert(`Successfully imported ${result.imported} transactions!`);
+      } else {
+        setCSVError(result.message || "Failed to import CSV");
+      }
+    } catch (error) {
+      setCSVError(error instanceof Error ? error.message : "Failed to import CSV");
+    } finally {
+      setCSVLoading(false);
+    }
+  };
+
+  const handleSetBalance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAccount || !balanceData.balance) {
+      setCSVError("Please enter a balance");
+      return;
+    }
+
+    try {
+      setCSVLoading(true);
+      setCSVError(null);
+      const response = await apiCall(`/accounts/${selectedAccount}/set-balance`, {
+        method: "PUT",
+        body: JSON.stringify({
+          balance: parseFloat(balanceData.balance),
+          date: balanceData.date,
+        }),
+      });
+
+      if (response.ok) {
+        setBalanceData({
+          balance: "",
+          date: new Date().toISOString().split("T")[0],
+        });
+        setShowBalanceAdjust(false);
+        fetchTransactions();
+        fetchAccounts();
+        alert("Opening balance set successfully!");
+      } else {
+        const result = await response.json();
+        setCSVError(result.message || "Failed to set balance");
+      }
+    } catch (error) {
+      setCSVError(error instanceof Error ? error.message : "Failed to set balance");
+    } finally {
+      setCSVLoading(false);
     }
   };
 
@@ -175,14 +278,28 @@ export default function Transactions() {
         }
       `}</style>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 gap-4 flex-wrap">
           <h1 className="text-4xl font-bold text-white">Transactions</h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
-          >
-            {showForm ? "Cancel" : "+ Add Transaction"}
-          </button>
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              {showForm ? "Cancel" : "+ Add Transaction"}
+            </button>
+            <button
+              onClick={() => setShowCSVImport(!showCSVImport)}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              {showCSVImport ? "Cancel" : "📥 Import CSV"}
+            </button>
+            <button
+              onClick={() => setShowBalanceAdjust(!showBalanceAdjust)}
+              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              {showBalanceAdjust ? "Cancel" : "⚖️ Set Balance"}
+            </button>
+          </div>
         </div>
 
         {showForm && (
@@ -264,6 +381,143 @@ export default function Transactions() {
               className="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer"
             >
               Add Transaction
+            </button>
+          </form>
+        )}
+
+        {/* CSV Import Form */}
+        {showCSVImport && (
+          <form
+            onSubmit={handleCSVImport}
+            className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
+          >
+            <h2 className="text-xl font-bold text-white mb-4">Import Transactions from CSV</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Account
+                </label>
+                <select
+                  value={selectedAccount || ""}
+                  onChange={(e) => setSelectedAccount(parseInt(e.target.value))}
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-blue-400/50 hover:bg-slate-600/40 focus:border-blue-400 focus:outline-none transition"
+                >
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  CSV File
+                </label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => {
+                    setCSVFile(e.target.files?.[0] || null);
+                    setCSVError(null);
+                  }}
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-gray-300 cursor-pointer hover:border-blue-400/50 hover:bg-slate-600/40 focus:border-blue-400 focus:outline-none transition"
+                  required
+                />
+                <p className="text-xs text-gray-400 mt-2">
+                  Format: date, amount, [type], [category], [description]
+                </p>
+              </div>
+
+              {csvError && (
+                <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
+                  <p className="text-red-300 text-sm">{csvError}</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={csvLoading}
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              {csvLoading ? "Importing..." : "Import Transactions"}
+            </button>
+          </form>
+        )}
+
+        {/* Set Balance Form */}
+        {showBalanceAdjust && (
+          <form
+            onSubmit={handleSetBalance}
+            className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
+          >
+            <h2 className="text-xl font-bold text-white mb-4">Set Opening Balance</h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Account
+                </label>
+                <select
+                  value={selectedAccount || ""}
+                  onChange={(e) => setSelectedAccount(parseInt(e.target.value))}
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition"
+                >
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>
+                      {account.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Opening Balance
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={balanceData.balance}
+                  onChange={(e) =>
+                    setBalanceData({ ...balanceData, balance: e.target.value })
+                  }
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition cursor-text"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={balanceData.date}
+                  onChange={(e) =>
+                    setBalanceData({ ...balanceData, date: e.target.value })
+                  }
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white hover:border-green-400/50 hover:bg-slate-600/40 focus:border-green-400 focus:outline-none transition cursor-text"
+                  required
+                />
+              </div>
+
+              {csvError && (
+                <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
+                  <p className="text-red-300 text-sm">{csvError}</p>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={csvLoading}
+              className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              {csvLoading ? "Setting..." : "Set Opening Balance"}
             </button>
           </form>
         )}

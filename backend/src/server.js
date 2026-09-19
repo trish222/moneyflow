@@ -2,12 +2,27 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
+import multer from "multer";
 import { AuthService } from "./services/authService.js";
 import { authMiddleware } from "./middleware/auth.js";
+import { parseCSV, createOpeningBalanceTransaction } from "./utils/csvParser.js";
 dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const DEFAULT_USER_ID = 1;
+// Multer config for CSV file uploads
+const upload = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype === "text/csv" || file.originalname.endsWith(".csv")) {
+            cb(null, true);
+        }
+        else {
+            cb(new Error("Only CSV files are allowed"));
+        }
+    },
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+});
 app.use(cors());
 app.use(express.json());
 // Error handler for Prisma
@@ -453,6 +468,137 @@ app.delete("/api/transactions/:id", authMiddleware, async (req, res) => {
         res.status(500).json({
             error: "internal_error",
             message: "Failed to delete transaction",
+        });
+    }
+});
+// POST /api/transactions/import-csv - Import transactions from CSV
+app.post("/api/transactions/import-csv", authMiddleware, upload.single("file"), async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        if (!req.file) {
+            return res.status(400).json({
+                error: "missing_file",
+                message: "CSV file is required",
+            });
+        }
+        const accountId = req.body.accountId ? parseInt(req.body.accountId) : null;
+        if (!accountId) {
+            return res.status(400).json({
+                error: "missing_fields",
+                message: "accountId is required",
+            });
+        }
+        // Verify account belongs to user
+        const account = await prisma.account.findUnique({
+            where: { id: accountId },
+        });
+        if (!account || account.userId !== userId) {
+            return res.status(403).json({
+                error: "forbidden",
+                message: "Cannot access this account",
+            });
+        }
+        // Parse CSV
+        const csvContent = req.file.buffer.toString("utf-8");
+        const parseResult = parseCSV(csvContent);
+        if (parseResult.stats.valid === 0) {
+            return res.status(400).json({
+                error: "invalid_csv",
+                message: "No valid transactions found in CSV",
+                errors: parseResult.errors,
+            });
+        }
+        // Create transactions
+        const createdTransactions = [];
+        for (const tx of parseResult.transactions) {
+            const created = await prisma.transaction.create({
+                data: {
+                    userId,
+                    accountId,
+                    amount: tx.amount,
+                    type: tx.type,
+                    category: tx.category,
+                    description: tx.description ? tx.description : null,
+                    date: new Date(tx.date),
+                },
+            });
+            createdTransactions.push(created);
+        }
+        res.status(201).json({
+            message: "Transactions imported successfully",
+            imported: createdTransactions.length,
+            errors: parseResult.errors,
+            transactions: createdTransactions,
+        });
+    }
+    catch (error) {
+        console.error("CSV import error:", error);
+        res.status(500).json({
+            error: "import_error",
+            message: error instanceof Error ? error.message : "Failed to import CSV",
+        });
+    }
+});
+// PUT /api/accounts/:id/set-balance - Set opening balance
+app.put("/api/accounts/:id/set-balance", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const idParam = typeof req.params.id === "string" ? req.params.id : "";
+        const accountId = idParam ? parseInt(idParam) : 0;
+        const { balance, date } = req.body;
+        if (balance === undefined || balance === null) {
+            return res.status(400).json({
+                error: "missing_fields",
+                message: "Balance is required",
+            });
+        }
+        // Verify account belongs to user
+        const account = await prisma.account.findUnique({
+            where: { id: accountId },
+        });
+        if (!account || account.userId !== userId) {
+            return res.status(403).json({
+                error: "forbidden",
+                message: "Cannot access this account",
+            });
+        }
+        const balanceNum = parseFloat(balance);
+        if (isNaN(balanceNum)) {
+            return res.status(400).json({
+                error: "invalid_balance",
+                message: "Balance must be a valid number",
+            });
+        }
+        const balanceDate = date || new Date().toISOString().split("T")[0];
+        // Create opening balance transaction
+        const openingTx = createOpeningBalanceTransaction(accountId, balanceNum, balanceDate);
+        // Create transaction and update account balance atomically
+        await prisma.transaction.create({
+            data: {
+                userId,
+                accountId,
+                amount: openingTx.amount,
+                type: openingTx.type,
+                category: openingTx.category,
+                description: openingTx.description,
+                date: new Date(openingTx.date),
+            },
+        });
+        // Update account balance
+        const updatedAccount = await prisma.account.update({
+            where: { id: accountId },
+            data: { balance: balanceNum },
+        });
+        res.json({
+            message: "Opening balance set successfully",
+            account: updatedAccount,
+        });
+    }
+    catch (error) {
+        console.error("Set balance error:", error);
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to set account balance",
         });
     }
 });

@@ -6,10 +6,13 @@ export interface FetchOptions extends RequestInit {
 
 export async function apiCall(endpoint: string, options: FetchOptions = {}) {
   const token = localStorage.getItem("accessToken");
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  };
+  const isFormData = options.body instanceof FormData;
+  const headers: Record<string, string> = isFormData
+    ? { ...options.headers }
+    : {
+        "Content-Type": "application/json",
+        ...options.headers,
+      };
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
