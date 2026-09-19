@@ -477,6 +477,148 @@ app.delete("/api/budgets/:id", async (req, res) => {
   }
 });
 
+// Reports/Analytics endpoints
+app.get("/api/reports/spending-by-category", async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    const userId = DEFAULT_USER_ID;
+
+    let query = `
+      SELECT category, SUM(amount) as total
+      FROM "Transaction"
+      WHERE "userId" = $1 AND type = 'expense'
+    `;
+    const params: any[] = [userId];
+
+    if (month && year) {
+      const startDate = new Date(Number(year), Number(month) - 1, 1);
+      const endDate = new Date(Number(year), Number(month), 0, 23, 59, 59);
+      query += ` AND date >= $2 AND date <= $3`;
+      params.push(startDate, endDate);
+    }
+
+    query += ` GROUP BY category ORDER BY total DESC`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch spending by category" });
+  }
+});
+
+app.get("/api/reports/income-vs-expenses", async (req, res) => {
+  try {
+    const { year } = req.query;
+    const userId = DEFAULT_USER_ID;
+    const targetYear = Number(year) || new Date().getFullYear();
+
+    const result = await pool.query(`
+      SELECT
+        EXTRACT(MONTH FROM date)::int as month,
+        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
+        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expenses
+      FROM "Transaction"
+      WHERE "userId" = $1 AND EXTRACT(YEAR FROM date) = $2
+      GROUP BY EXTRACT(MONTH FROM date)
+      ORDER BY month
+    `, [userId, targetYear]);
+
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch income vs expenses" });
+  }
+});
+
+app.get("/api/reports/net-worth-history", async (req, res) => {
+  try {
+    const userId = DEFAULT_USER_ID;
+
+    const result = await pool.query(`
+      SELECT
+        date_trunc('month', NOW() - interval '12 months' + interval '1 day' * generate_series(0, 365))::date as month,
+        (SELECT COALESCE(SUM(balance), 0) FROM "Account" WHERE "userId" = $1) -
+        (SELECT COALESCE(SUM(amount), 0) FROM "Debt" WHERE "userId" = $1 AND date <= date_trunc('month', NOW() - interval '12 months' + interval '1 day' * generate_series(0, 365))::date) as net_worth
+      FROM generate_series(0, 11)
+      ORDER BY month
+    `, [userId]);
+
+    const months = [];
+    for (let i = 0; i < 12; i++) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - 11 + i);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      months.push({
+        month: monthName,
+        netWorth: 0
+      });
+    }
+
+    res.json(months);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch net worth history" });
+  }
+});
+
+app.get("/api/reports/portfolio-performance", async (req, res) => {
+  try {
+    const userId = DEFAULT_USER_ID;
+
+    const result = await pool.query(`
+      SELECT
+        ia.name as account,
+        ia."accountType" as type,
+        COUNT(i.id) as holdings,
+        SUM(i.value) as totalValue
+      FROM "InvestmentAccount" ia
+      LEFT JOIN "Investment" i ON ia.id = i."investmentAccountId"
+      WHERE ia."userId" = $1
+      GROUP BY ia.id, ia.name, ia."accountType"
+      ORDER BY ia."createdAt" DESC
+    `, [userId]);
+
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch portfolio performance" });
+  }
+});
+
+app.get("/api/reports/summary", async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    const userId = DEFAULT_USER_ID;
+
+    let dateFilter = "";
+    const params: any[] = [userId];
+
+    if (month && year) {
+      const startDate = new Date(Number(year), Number(month) - 1, 1);
+      const endDate = new Date(Number(year), Number(month), 0, 23, 59, 59);
+      dateFilter = ` AND date >= $2 AND date <= $3`;
+      params.push(startDate, endDate);
+    }
+
+    const [income, expenses, transactions, budgets] = await Promise.all([
+      pool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM "Transaction" WHERE "userId" = $1 AND type = 'income'${dateFilter}`, params),
+      pool.query(`SELECT COALESCE(SUM(amount), 0) as total FROM "Transaction" WHERE "userId" = $1 AND type = 'expense'${dateFilter}`, params),
+      pool.query(`SELECT COUNT(*) as count FROM "Transaction" WHERE "userId" = $1${dateFilter}`, params),
+      pool.query(`SELECT COUNT(*) as count FROM "Budget" WHERE "userId" = $1 AND month = $2 AND year = $3`, [userId, Number(month), Number(year)])
+    ]);
+
+    const incomeTotal = income.rows[0].total;
+    const expensesTotal = expenses.rows[0].total;
+
+    res.json({
+      income: Math.round(incomeTotal * 100) / 100,
+      expenses: Math.round(expensesTotal * 100) / 100,
+      netIncome: Math.round((incomeTotal - expensesTotal) * 100) / 100,
+      transactionCount: transactions.rows[0].count,
+      budgetCount: budgets.rows[0].count
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch summary" });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

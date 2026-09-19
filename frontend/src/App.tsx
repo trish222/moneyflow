@@ -9,6 +9,7 @@ import Budgets from "./pages/Budgets";
 import Savings from "./pages/Savings";
 import Investments from "./pages/Investments";
 import Debt from "./pages/Debt";
+import Reports from "./pages/Reports";
 
 function App() {
   return (
@@ -79,6 +80,15 @@ function App() {
                     Savings
                   </Link>
                 </li>
+
+                <li>
+                  <Link
+                    to="/reports"
+                    className="text-gray-300 hover:text-purple-400 font-medium transition cursor-pointer"
+                  >
+                    Reports
+                  </Link>
+                </li>
               </ul>
 
               <div className="flex gap-4 items-center flex-shrink-0">
@@ -105,6 +115,7 @@ function App() {
             <Route path="/investments" element={<Investments />} />
             <Route path="/debt" element={<Debt />} />
             <Route path="/savings" element={<Savings />} />
+            <Route path="/reports" element={<Reports />} />
           </Routes>
         </div>
       </div>
