@@ -14,6 +14,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { apiCall } from "../utils/api";
 
 interface SpendingData {
   category: string;
@@ -60,10 +61,10 @@ export default function Reports() {
     try {
       setLoading(true);
       const [spendingRes, incomeRes, portfolioRes, summaryRes] = await Promise.all([
-        fetch(`http://localhost:3000/api/reports/spending-by-category?month=${selectedMonth}&year=${selectedYear}`),
-        fetch(`http://localhost:3000/api/reports/income-vs-expenses?year=${selectedYear}`),
-        fetch(`http://localhost:3000/api/reports/portfolio-performance`),
-        fetch(`http://localhost:3000/api/reports/summary?month=${selectedMonth}&year=${selectedYear}`),
+        apiCall(`/reports/spending-by-category?month=${selectedMonth}&year=${selectedYear}`),
+        apiCall(`/reports/income-vs-expenses?year=${selectedYear}`),
+        apiCall(`/reports/portfolio-performance`),
+        apiCall(`/reports/summary?month=${selectedMonth}&year=${selectedYear}`),
       ]);
 
       const [spendingData, incomeData, portfolioData, summaryData] = await Promise.all([

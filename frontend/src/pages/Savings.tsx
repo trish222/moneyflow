@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiCall } from "../utils/api";
 
 interface SavingsGoal {
   id: number;
@@ -25,7 +26,7 @@ export default function Savings() {
 
   const fetchGoals = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/savings-goals");
+      const response = await apiCall("/savings-goals");
       const data = await response.json();
       setGoals(data);
     } catch (error) {
@@ -38,9 +39,9 @@ export default function Savings() {
   const handleAddGoal = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/api/savings-goals", {
+      const response = await apiCall("/savings-goals", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        
         body: JSON.stringify({
           name: formData.name,
           targetAmount: parseFloat(formData.targetAmount),
@@ -68,9 +69,9 @@ export default function Savings() {
     if (!goal) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/savings-goals/${id}`, {
+      const response = await apiCall(`/savings-goals/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        
         body: JSON.stringify({
           name: goal.name,
           targetAmount: goal.targetAmount,
@@ -88,7 +89,7 @@ export default function Savings() {
 
   const handleDeleteGoal = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/savings-goals/${id}`, {
+      const response = await apiCall(`/savings-goals/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {

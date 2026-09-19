@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiCall } from "../utils/api";
 
 interface Budget {
   id: number;
@@ -43,9 +44,9 @@ export default function Budgets() {
   const handleAddBudget = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/api/budgets", {
+      const response = await apiCall("/budgets", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        
         body: JSON.stringify({
           category: formData.category,
           limit: parseFloat(formData.limit),
@@ -65,7 +66,7 @@ export default function Budgets() {
 
   const handleDeleteBudget = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/budgets/${id}`, {
+      const response = await apiCall(`/budgets/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {

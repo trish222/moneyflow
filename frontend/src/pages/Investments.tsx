@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiCall } from "../utils/api";
 
 interface Investment {
   id: number;
@@ -29,7 +30,6 @@ export default function Investments() {
   const [newInvType, setNewInvType] = useState("stock");
   const [newInvValue, setNewInvValue] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingInvId, setEditingInvId] = useState<number | null>(null);
 
   const accountTypes = ["Brokerage", "401k", "Roth IRA", "Traditional IRA", "HSA"];
   const investmentTypes = ["stock", "etf", "crypto", "bond", "mutual fund", "commodity"];
@@ -41,14 +41,14 @@ export default function Investments() {
   const fetchAccounts = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:3000/api/investment-accounts");
+      const response = await apiCall("/investment-accounts");
       const accountsData = await response.json();
 
       // Fetch investments for each account
       const accountsWithInvestments = await Promise.all(
         accountsData.map(async (account: InvestmentAccount) => {
           try {
-            const invResponse = await fetch(`http://localhost:3000/api/investment-accounts/${account.id}`);
+            const invResponse = await apiCall(`/investment-accounts/${account.id}`);
             const fullAccount = await invResponse.json();
             return fullAccount;
           } catch {
@@ -71,9 +71,8 @@ export default function Investments() {
   const handleAddAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3000/api/investment-accounts", {
+      const response = await apiCall("/investment-accounts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newAccountName,
           accountType: newAccountType,
@@ -94,9 +93,8 @@ export default function Investments() {
     e.preventDefault();
     if (!selectedAccountId) return;
     try {
-      const response = await fetch("http://localhost:3000/api/investments", {
+      const response = await apiCall("/investments", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: newInvName,
           type: newInvType,
@@ -119,7 +117,7 @@ export default function Investments() {
 
   const handleDeleteInvestment = async (investmentId: number) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/investments/${investmentId}`, {
+      const response = await apiCall(`/investments/${investmentId}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -132,7 +130,7 @@ export default function Investments() {
 
   const handleDeleteAccount = async (accountId: number) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/investment-accounts/${accountId}`, {
+      const response = await apiCall(`/investment-accounts/${accountId}`, {
         method: "DELETE",
       });
       if (response.ok) {
