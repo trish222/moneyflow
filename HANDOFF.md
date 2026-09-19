@@ -189,7 +189,7 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 
 ---
 
-## Session Progress (September 19 - Spec, Planning, Auth & Core Integration)
+## Session Progress (September 19-20 - Spec, Planning, Auth, Core Integration, CSV Import & Balance Adjustment)
 
 ### ✅ Completed This Session
 
@@ -259,28 +259,76 @@ Define complete technical specification and implementation roadmap for MoneyFlow
   - [x] Budgets: calculates spent amount from transactions correctly
 - [x] Created commit f92d4a0 with all authentication and integration fixes
 
+**Part 4 - CSV Import & Balance Adjustment (September 20):**
+- [x] Created flexible CSV parser (csvParser.ts):
+  - Supports headerless CSVs with positional columns (date, amount, [type], [category], [description])
+  - Auto-detects headers with keyword matching
+  - Handles minimal data (date + amount only)
+  - Returns detailed error reports with row numbers
+- [x] Implemented CSV import backend:
+  - POST /api/transactions/import-csv endpoint with multer file handling
+  - Validates file type and size (10MB max)
+  - Creates multiple transactions from CSV in single request
+  - Returns import summary with success count and any parsing errors
+- [x] Implemented opening balance feature:
+  - PUT /api/accounts/:id/set-balance endpoint
+  - Creates opening balance transaction automatically
+  - Sets account balance to specified amount
+  - Supports custom date for balance effective date
+- [x] Updated frontend Transactions page:
+  - CSV import form with file upload and account selection
+  - Set opening balance form with balance amount and date fields
+  - Fetch accounts on page load
+  - Error handling and loading states for both operations
+  - Format hint for CSV import (shows expected column order)
+- [x] Updated apiCall utility to handle FormData for file uploads
+- [x] Both backend and frontend compile successfully
+- [x] Created commit 6b683df with CSV import and balance adjustment features
+
+### 💡 Key Features Added (September 20)
+
+**CSV Import System:**
+- Flexible parser handles headerless CSVs, positional columns, and auto-detected headers
+- Supports minimal format (date + amount) up to full format (date, amount, type, category, description)
+- Auto-detects transaction type as income/expense based on keywords
+- Detailed error reporting with row numbers for debugging
+- Comprehensive guide at CSV_IMPORT_GUIDE.md
+
+**Opening Balance Feature:**
+- Set account balance with automatic transaction creation
+- Provides audit trail in transaction history
+- Used for account reconciliation or historical data setup
+
 ### 📝 What's Left to Do (Next Session)
 
-**Priority 1: Day 2 (Core Features) - IN PROGRESS**
+**Priority 1: Testing & Browser Verification**
 - [ ] End-to-end testing in browser (register → login → dashboard → navigate pages)
-- [ ] Seed database with sample data for current user (accounts, transactions, budgets)
-- [ ] Test dashboard with real data (metrics should calculate correctly)
-- [ ] Test transaction CRUD operations (create, read, update, delete)
-- [ ] Implement transaction filters/search if needed
-- [ ] Test budget tracking with spending data
+- [ ] Test CSV import with sample CSV files (various formats: minimal, positional, headers)
+- [ ] Test opening balance feature (set balance, verify transaction created)
+- [ ] Test transaction CRUD operations (create, read, update, delete) with new imports
+- [ ] Verify CSV parser error handling (invalid dates, amounts, empty files)
+- [ ] Test on mobile browser (responsive design check)
 - [ ] Verify all page layouts match design system
 
-**Priority 2: Recurring Transactions (Manual Endpoint Only)**
+**Priority 2: CSV Import Edge Cases**
+- [ ] Test large CSV files (1000+ transactions)
+- [ ] Test various date formats (ISO, US, international, text)
+- [ ] Test with special characters in descriptions
+- [ ] Test with missing optional columns
+- [ ] Verify account balance updates correctly after import
+- [ ] Test duplicate import handling
+
+**Priority 3: Recurring Transactions (Manual Endpoint Only)**
 - [ ] Implement POST /recurring/:id/create-once endpoint (manual transaction creation from rule)
 - [ ] Implement RecurringTransaction CRUD endpoints (GET, POST, PUT, DELETE)
 - [ ] Add recurring transaction UI to Transactions page
 - [ ] Defer cron scheduler to Phase 2
 
-**Priority 3: Polish & Testing**
+**Priority 4: Polish & Testing**
 - [ ] Fix any remaining TypeScript warnings
 - [ ] Verify hover/focus states on all interactive elements per design system
-- [ ] Test on mobile browser (responsive design check)
 - [ ] Test error handling (401, 403, 404, 500 responses)
+- [ ] Test with slow network (verify loading states)
 
 **TESTING STATUS (September 19):**
 - ✅ Backend auth endpoints tested and working (register, login)
@@ -352,14 +400,17 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 
 ### 💡 Key Context for Next Session
 
-**Current State (September 19 Session End):**
-- Branch: glassy-in, last commit f92d4a0 (authentication integration)
+**Current State (September 20 Session End):**
+- Branch: glassy-in, last commit 6b683df (CSV import and balance adjustment)
 - Both backend and frontend dev servers running and tested
 - All TypeScript errors resolved, builds successful
 - Registration/login endpoints verified working with JWT tokens
 - Budget spent calculation from transactions verified working
 - All 6 main API endpoints (accounts, transactions, investments, debts, savings goals, budgets) implemented
 - Dashboard metrics endpoint implemented and returns correct structure
+- CSV import endpoint implemented with flexible parser (POST /api/transactions/import-csv)
+- Opening balance endpoint implemented (PUT /api/accounts/:id/set-balance)
+- Frontend Transactions page has CSV import and balance adjustment forms
 
 **What's Ready to Test:**
 1. Full registration → login → dashboard flow in browser

@@ -27,6 +27,8 @@ MoneyFlow is a personal finance tracker that helps users manage accounts, transa
 | Transactions CRUD | ✅ Required | Add, edit, delete, search/filter |
 | Accounts Management | ✅ Required | Multiple accounts per user, account selection |
 | Recurring Transactions API | ✅ Required | Manual POST endpoint only (no cron job) |
+| CSV Import | ✅ Added | Flexible parser, supports headerless/positional formats |
+| Opening Balance | ✅ Added | Set starting account balance via transaction |
 | Budgets | ⏳ Phase 2 | Deferred; design schema only |
 | Investments | ⏳ Phase 2 | Deferred; design schema only |
 | Reports & Analytics | ⏳ Phase 2 | Deferred |
@@ -531,6 +533,97 @@ Delete transaction.
 
 **Side Effects:**
 - Recalculate Account.balance
+
+---
+
+#### POST /transactions/import-csv
+Import multiple transactions from CSV file.
+
+**Request:**
+```
+Form Data:
+- file: CSV file
+- accountId: integer (which account to import to)
+```
+
+**CSV Format (Flexible):**
+- Auto-detects headers or assumes positional columns
+- Positional: date, amount, [type], [category], [description]
+- Minimal: date, amount (type defaults to "expense", category to "uncategorized")
+- Supports headerless or header-based parsing
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Transactions imported successfully",
+    "imported": 5,
+    "errors": [
+      { "row": 3, "error": "Invalid date format: 2026-13-45" }
+    ],
+    "transactions": [
+      {
+        "id": 101,
+        "accountId": 1,
+        "amount": 45.99,
+        "type": "expense",
+        "category": "food",
+        "description": "Grocery store",
+        "date": "2026-09-19T15:30:00Z"
+      }
+    ]
+  },
+  "error": null
+}
+```
+
+**Validation:**
+- File must be CSV (text/csv or .csv extension)
+- File size max 10MB
+- accountId must belong to user
+- CSV rows must have at least date and amount
+
+**Error Scenarios:**
+- 400: Missing file or accountId
+- 403: Account doesn't belong to user
+- 400: No valid transactions in CSV (returns error details)
+
+---
+
+#### PUT /accounts/:id/set-balance
+Set opening balance for account (creates opening balance transaction).
+
+**Request:**
+```json
+{
+  "balance": 10000.00,
+  "date": "2026-09-01"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Opening balance set successfully",
+    "account": {
+      "id": 1,
+      "name": "Checking",
+      "type": "checking",
+      "balance": 10000.00,
+      "createdAt": "2026-01-15T10:30:00Z"
+    }
+  },
+  "error": null
+}
+```
+
+**Side Effects:**
+- Creates "opening_balance" type transaction
+- Updates account balance to specified amount
+- Transaction appears in transaction history with "Opening Balance" description
 
 ---
 
