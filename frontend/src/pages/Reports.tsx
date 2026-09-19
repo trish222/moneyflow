@@ -5,8 +5,6 @@ import {
   Cell,
   BarChart,
   Bar,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -237,16 +235,23 @@ export default function Reports() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ category, total }) => `${category}: $${total.toFixed(2)}`}
+                    label={({ index, value }: any) => {
+                      const data = spending[index || 0];
+                      const numValue = typeof value === "number" ? value : 0;
+                      return `${data?.category || ""}: $${numValue.toFixed(2)}`;
+                    }}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="total"
                   >
-                    {spending.map((entry, index) => (
+                    {spending.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value: any) => {
+                    const numValue = typeof value === "number" ? value : 0;
+                    return `$${numValue.toFixed(2)}`;
+                  }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -269,7 +274,10 @@ export default function Reports() {
                       border: "1px solid rgba(255, 255, 255, 0.1)",
                       borderRadius: "0.75rem",
                     }}
-                    formatter={(value) => `$${value.toFixed(2)}`}
+                    formatter={(value: any) => {
+                      const numValue = typeof value === "number" ? value : 0;
+                      return `$${numValue.toFixed(2)}`;
+                    }}
                   />
                   <Legend />
                   <Bar dataKey="income" fill="#00d97e" radius={[8, 8, 0, 0]} />
@@ -296,7 +304,10 @@ export default function Reports() {
                       border: "1px solid rgba(255, 255, 255, 0.1)",
                       borderRadius: "0.75rem",
                     }}
-                    formatter={(value) => `$${value.toFixed(2)}`}
+                    formatter={(value: any) => {
+                      const numValue = typeof value === "number" ? value : 0;
+                      return `$${numValue.toFixed(2)}`;
+                    }}
                   />
                   <Legend />
                   <Bar dataKey="totalValue" fill="#00d97e" name="Total Value" radius={[8, 8, 0, 0]} />

@@ -301,11 +301,14 @@ export default function Transactions() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {categoryData.map((entry, index) => (
+                      {categoryData.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                    <Tooltip formatter={(value: any) => {
+                      const numValue = typeof value === "number" ? value : 0;
+                      return `$${numValue.toFixed(2)}`;
+                    }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

@@ -45,7 +45,7 @@ export default function Savings() {
         body: JSON.stringify({
           name: formData.name,
           targetAmount: parseFloat(formData.targetAmount),
-          currentAmount: parseFloat(formData.currentAmount || 0),
+          currentAmount: parseFloat(formData.currentAmount || "0"),
           date: formData.date,
         }),
       });

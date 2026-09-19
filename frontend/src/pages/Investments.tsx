@@ -29,7 +29,6 @@ export default function Investments() {
   const [newInvName, setNewInvName] = useState("");
   const [newInvType, setNewInvType] = useState("stock");
   const [newInvValue, setNewInvValue] = useState("");
-  const [editingId, setEditingId] = useState<number | null>(null);
 
   const accountTypes = ["Brokerage", "401k", "Roth IRA", "Traditional IRA", "HSA"];
   const investmentTypes = ["stock", "etf", "crypto", "bond", "mutual fund", "commodity"];

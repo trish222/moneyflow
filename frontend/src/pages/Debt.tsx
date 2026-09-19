@@ -25,8 +25,8 @@ export default function Debt() {
         const data = await response.json();
         setDebts(data);
 
-        const total = data.reduce((sum: number, debt: DebtItem) => sum + debt.amount, 0);
-        const payments = data.reduce((sum: number, debt: DebtItem) => sum + debt.monthlyPayment, 0);
+        const total = data.reduce((sum: number, debt: DebtItem) => sum + (debt.amount || 0), 0);
+        const payments = data.reduce((sum: number, debt: DebtItem) => sum + (debt.monthlyPayment || 0), 0);
         setTotalDebt(total);
         setTotalMonthlyPayment(payments);
       } catch (error) {

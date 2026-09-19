@@ -795,7 +795,23 @@ app.get("/api/budgets", authMiddleware, async (req, res) => {
             where.year = parseInt(year);
         }
         const budgets = await prisma.budget.findMany({ where });
-        res.json(budgets);
+        // Calculate spent amount for each budget from transactions
+        const budgetsWithSpent = await Promise.all(budgets.map(async (budget) => {
+            const startDate = new Date(budget.year, budget.month - 1, 1, 0, 0, 0);
+            const endDate = new Date(budget.year, budget.month, 0, 23, 59, 59);
+            const transactions = await prisma.transaction.findMany({
+                where: {
+                    userId,
+                    category: budget.category,
+                    type: "expense",
+                    date: { gte: startDate, lte: endDate },
+                },
+                select: { amount: true },
+            });
+            const spent = transactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+            return { ...budget, spent: Math.round(spent * 100) / 100 };
+        }));
+        res.json(budgetsWithSpent);
     }
     catch (error) {
         res.status(500).json({
