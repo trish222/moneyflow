@@ -1000,6 +1000,155 @@ const handleSubmit = (e: FormEvent) => {
 };
 ```
 
+### 5.6 Design System: Glow Card Component
+
+All dashboard cards and content containers use the **Glow Card system** - a glassy, transparent card design with vibrant bottom ombre glows and subtle colored borders.
+
+#### 5.6.1 Glow Card Structure & Styling
+
+**HTML Structure:**
+```tsx
+<div className="glow-card glow-{color-type}">
+  {/* content */}
+</div>
+```
+
+**CSS Properties (required in all pages using glow cards):**
+
+```css
+.glow-card {
+  position: relative;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(10, 15, 30, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.3px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+/* Muted colored border - opacity increases on hover */
+.glow-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 1.5rem;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--color-1), var(--color-2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.35;
+  transition: opacity 0.3s ease;
+}
+
+.glow-card:hover::after {
+  opacity: 0.6;
+}
+
+/* Bottom ombre glow + side accents + hover left-oval effect */
+.glow-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.glow-card:hover::before {
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 60% 120% at -10% 50%, var(--glow-color-dim) 0%, transparent 40%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+}
+```
+
+**Features:**
+- Glassy transparent background with 20px backdrop blur
+- Ultra-thin 0.3px white border for minimal visual weight
+- Muted colored gradient borders (0.35 opacity, 0.6 on hover)
+- White-to-color bottom ombre glow fading upward
+- Subtle colored glows at bottom corners
+- Hover left-oval effect that brightens (not darkens) the card
+- All color changes smooth over 0.3s
+
+#### 5.6.2 Color Class Definitions
+
+Each glow card type has a unique color pair for visual distinction:
+
+```css
+.glow-red {
+  --color-1: #ff6b6b;
+  --color-2: #ffa94d;
+  --glow-color: rgba(255, 107, 107, 0.8);
+  --glow-color-dim: rgba(255, 107, 107, 0.2);
+}
+
+.glow-cyan {
+  --color-1: #00d9ff;
+  --color-2: #0099ff;
+  --glow-color: rgba(0, 217, 255, 0.8);
+  --glow-color-dim: rgba(0, 217, 255, 0.2);
+}
+
+.glow-purple {
+  --color-1: #c77dff;
+  --color-2: #ff006e;
+  --glow-color: rgba(199, 125, 255, 0.8);
+  --glow-color-dim: rgba(199, 125, 255, 0.2);
+}
+
+.glow-blue {
+  --color-1: #00b4ff;
+  --color-2: #0066ff;
+  --glow-color: rgba(0, 180, 255, 0.8);
+  --glow-color-dim: rgba(0, 180, 255, 0.2);
+}
+
+.glow-green {
+  --color-1: #00d97e;
+  --color-2: #00a86b;
+  --glow-color: rgba(0, 217, 126, 0.8);
+  --glow-color-dim: rgba(0, 217, 126, 0.2);
+}
+```
+
+**Color Assignments (Dashboard):**
+- Red/Orange: Net Worth card
+- Cyan: Available Funds, Transactions page
+- Purple: Debt, Budgeting page
+- Blue: Savings, Debt details
+- Green: Investments page
+
+#### 5.6.3 Page Background
+
+All pages must use pure black background with minimal grey center for optimal glow contrast:
+
+```tsx
+<div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
+```
+
+This creates subtle depth without color hue and pairs perfectly with vibrant card glows.
+
 ---
 
 ## 6. Backend Implementation

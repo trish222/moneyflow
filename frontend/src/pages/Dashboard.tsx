@@ -112,15 +112,18 @@ export default function Dashboard() {
     : metrics.availableFunds;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
       <style>{`
         .glow-card {
           position: relative;
           border-radius: 1.5rem;
           padding: 1.5rem;
-          background: rgba(15, 23, 42, 0.8);
-          backdrop-filter: blur(10px);
+          background: rgba(10, 15, 30, 0.3);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          border: 0.3px solid rgba(255, 255, 255, 0.05);
           transition: all 0.3s ease;
+          overflow: hidden;
         }
 
         .glow-card::after {
@@ -131,31 +134,47 @@ export default function Dashboard() {
           right: 0;
           bottom: 0;
           border-radius: 1.5rem;
-          padding: 2px;
+          padding: 1px;
           background: linear-gradient(135deg, var(--color-1), var(--color-2));
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor;
           mask-composite: exclude;
           pointer-events: none;
           z-index: 10;
+          opacity: 0.35;
+          transition: opacity 0.3s ease;
+        }
+
+        .glow-card:hover::after {
+          opacity: 0.6;
         }
 
         .glow-card::before {
           content: '';
           position: absolute;
-          inset: -8px;
-          border-radius: 1.5rem;
-          background: linear-gradient(135deg, var(--color-1), var(--color-2));
-          z-index: -1;
-          filter: blur(15px);
-          opacity: 0.3;
-          transition: opacity 0.3s ease, filter 0.3s ease;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 100%;
+          background:
+            linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+            radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+            radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+            linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+          z-index: 1;
           pointer-events: none;
+          opacity: 0.9;
+          transition: opacity 0.3s ease;
         }
 
         .glow-card:hover::before {
-          opacity: 0.6;
-          filter: blur(25px);
+          opacity: 1;
+          background:
+            radial-gradient(ellipse 60% 120% at -10% 50%, var(--glow-color-dim) 0%, transparent 40%),
+            linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+            radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+            radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+            linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
         }
 
         .glow-red {
@@ -295,21 +314,17 @@ export default function Dashboard() {
         }
       `}</style>
 
-      {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
+      {/* Header with Activity Summary Filters */}
+      <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
             Welcome, Trish
           </h1>
           <p className="text-purple-300">Financial Snapshot</p>
         </div>
-      </div>
 
-      {/* Activity Summary - Horizontal Bar */}
-      <div className="mb-8 flex flex-wrap justify-end gap-2">
-        <h3 className="w-full text-right text-white font-semibold text-sm mb-2">
-          Activity Summary
-        </h3>
+        {/* Activity Summary - Horizontal Bar */}
+        <div className="flex flex-wrap justify-start lg:justify-end gap-2">
         <button
           onClick={() => setFilterType("day")}
           className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
@@ -364,6 +379,7 @@ export default function Dashboard() {
         >
           All Time
         </button>
+        </div>
       </div>
 
       {/* Selectors for Filters - Reserved Space */}

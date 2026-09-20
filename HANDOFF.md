@@ -105,10 +105,21 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - **Management:** Pause/resume, edit (future occurrences only), delete rule
 - **DB:** New RecurringTransaction table (see MONEYFLOW_SPEC.md)
 
-### Design System (Existing)
-- **Background:** Dark ombre gradient (black → gray → black, NO purple)
-- **Primary Components:** Glow card system (glassy, backdrop blur, vibrant neon glow accents)
-- **Color Classes:** glow-red (net worth), glow-cyan (transactions), glow-purple (budgets), glow-green (investments), glow-blue (debt)
+### Design System (Finalized September 20, 2026)
+- **Background:** Pure black gradient (`linear-gradient(to bottom right, #000000, #0f0f0f, #000000)`) - NO purple tones
+- **Primary Components:** Glow card system (glassy, 20px backdrop blur, vibrant color glows)
+  - **See detailed specs in MONEYFLOW_SPEC.md Section 5.6** for complete CSS, color definitions, and implementation requirements
+  - Transparent background: `rgba(10, 15, 30, 0.3)`
+  - Ultra-thin border: 0.3px white
+  - Border glow (::after): 0.35 opacity → 0.6 on hover
+  - Bottom ombre + side accents + hover left-oval (::before): 0.9 opacity → 1.0 on hover (brightens, not darkens)
+  - All transitions: 0.3s ease
+- **Color Classes:** 
+  - glow-red: #ff6b6b → #ffa94d (Net Worth)
+  - glow-cyan: #00d9ff → #0099ff (Transactions, Available Funds)
+  - glow-purple: #c77dff → #ff006e (Budgeting, Debt)
+  - glow-blue: #00b4ff → #0066ff (Savings)
+  - glow-green: #00d97e → #00a86b (Investments)
 - **Typography:** System fonts, no custom fonts (performance)
 - **Hover States:** Every interactive element must have explicit hover/focus feedback
 - **Responsive:** Mobile-first; breakpoints at md: (tablet) and lg: (desktop)
@@ -285,6 +296,22 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - [x] Both backend and frontend compile successfully
 - [x] Created commit 6b683df with CSV import and balance adjustment features
 
+**Part 5 - Dashboard Theme Refinement (September 20, 21:00 UTC):**
+- [x] Fixed Dashboard.tsx glow card theme to match CLAUDE.md and MONEYFLOW_SPEC.md:
+  - Changed background from purple-tinted dark gradient to pure black (`linear-gradient(to bottom right, #000000, #0f0f0f, #000000)`)
+  - Updated glow cards: more transparent background (`rgba(10, 15, 30, 0.3)` vs 0.8), increased blur (20px), added 0.3px white border
+  - Corrected glow effects (::before for bottom ombre + side accents + hover left-oval, ::after for subtle border glow)
+  - Fixed hover effect: removed dark overlay, now brightens instead of darkens (changed `rgba(0, 0, 0, 0.3)` to `transparent`)
+  - Moved Activity Summary filters inline with welcome message (responsive: stacks on mobile, horizontal on desktop)
+  - Added all glow color dim variants (`--glow-color-dim`) for proper opacity cascading
+- [x] Added comprehensive Design System section (5.6) to MONEYFLOW_SPEC.md:
+  - Complete CSS for glow-card with all pseudo-elements and states
+  - All 5 color class definitions (red, cyan, purple, blue, green)
+  - Color assignments by component type
+  - Page background specification
+  - Ensures future developers follow exact same styling approach
+- [x] No TypeScript errors after changes ✅
+
 ### 💡 Key Features Added (September 20)
 
 **CSV Import System:**
@@ -325,12 +352,13 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - [ ] Defer cron scheduler to Phase 2
 
 **Priority 4: Polish & Testing**
+- [x] Fix glow card theme to match design spec (September 20, 21:00 UTC) ✅
 - [ ] Fix any remaining TypeScript warnings
 - [ ] Verify hover/focus states on all interactive elements per design system
 - [ ] Test error handling (401, 403, 404, 500 responses)
 - [ ] Test with slow network (verify loading states)
 
-**TESTING STATUS (September 19):**
+**TESTING STATUS (September 19-20):**
 - ✅ Backend auth endpoints tested and working (register, login)
 - ✅ JWT tokens generated and validated correctly
 - ✅ Protected endpoints verify Authorization header
@@ -339,6 +367,7 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - ✅ TypeScript compilation successful (all 9 files fixed)
 - ✅ Budget spent calculation from transactions working
 - ✅ Backend and frontend dev servers running
+- ✅ Dashboard glow card theme corrected (pure black background, proper glow effects)
 - ⏳ Next: E2E browser testing (register → login → dashboard → create transaction)
 
 **Priority 2: Day 2 (Accounts & Core Pages)**
