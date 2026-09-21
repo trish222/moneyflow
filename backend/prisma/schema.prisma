@@ -8,10 +8,13 @@ datasource db {
 }
 
 model User {
-  id                  Int                @id @default(autoincrement())
-  email               String             @unique
+  id                  Int                      @id @default(autoincrement())
+  email               String                   @unique
+  passwordHash        String                   @default("")  // bcrypt hash, never return in API
   name                String?
-  createdAt           DateTime           @default(now())
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @default(now()) @updatedAt
+
   accounts            Account[]
   transactions        Transaction[]
   investments         Investment[]
@@ -19,83 +22,145 @@ model User {
   debts               Debt[]
   savingsGoals        SavingsGoal[]
   budgets             Budget[]
+  recurringTxs        RecurringTransaction[]
+
+  @@index([email])
 }
 
 model Account {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  name      String
-  balance   Float    @default(0)
-  type      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int           @id @default(autoincrement())
+  userId        Int
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  balance       Float         @default(0)
+  type          String        // "checking", "savings", "credit_card"
+
+  transactions  Transaction[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
 }
 
 model Transaction {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id])
-  amount    Float
-  type      String
-  category  String
-  date      DateTime
-  createdAt DateTime @default(now())
+  id                      Int                     @id @default(autoincrement())
+  userId                  Int
+  user                    User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  accountId               Int?
+  account                 Account?                @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  amount                  Float                   // Always positive; type determines sign
+  type                    String                  // "income" | "expense"
+  category                String
+  description             String?
+  date                    DateTime
+
+  recurringTransactionId  Int?
+  recurringTransaction    RecurringTransaction?   @relation(fields: [recurringTransactionId], references: [id], onDelete: SetNull)
+
+  createdAt               DateTime                @default(now())
+  updatedAt               DateTime                @default(now()) @updatedAt
+
+  @@index([userId, date])
+  @@index([accountId])
+  @@index([recurringTransactionId])
 }
 
 model InvestmentAccount {
   id          Int          @id @default(autoincrement())
   userId      Int
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   name        String
   accountType String       // e.g., "Brokerage", "401k", "Roth IRA", "Traditional IRA"
   investments Investment[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([userId])
 }
 
 model Investment {
   id                  Int                @id @default(autoincrement())
   userId              Int
-  user                User               @relation(fields: [userId], references: [id])
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   investmentAccountId Int
-  investmentAccount   InvestmentAccount  @relation(fields: [investmentAccountId], references: [id])
+  investmentAccount   InvestmentAccount  @relation(fields: [investmentAccountId], references: [id], onDelete: Cascade)
   name                String
   value               Float
   type                String
   date                DateTime
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([investmentAccountId])
 }
 
 model Debt {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   amount    Float
   type      String
   date      DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model SavingsGoal {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   targetAmount Float
   currentAmount Float @default(0)
   date      DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model RecurringTransaction {
+  id              Int           @id @default(autoincrement())
+  userId          Int
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name            String        // "Netflix Subscription"
+  amount          Float         // Always positive
+  type            String        // "income" | "expense"
+  category        String
+  accountId       Int           // Which account to create transactions in
+
+  frequency       String        // "daily", "weekly", "biweekly", "monthly", "quarterly", "yearly"
+  dayOfMonth      Int?          // For monthly: 1-31 (null = end of month)
+  dayOfWeek       Int?          // For weekly: 0-6 (0=Sunday)
+  startDate       DateTime
+  endDate         DateTime?     // Optional expiration date
+
+  isActive        Boolean       @default(true)
+  lastCreatedAt   DateTime?     // When last transaction was created
+  nextDue         DateTime      // When next transaction would be created
+
+  transactions    Transaction[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId, isActive])
+  @@index([accountId])
 }
 
 model Budget {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category  String
   limit     Float
   spent     Float    @default(0)
@@ -103,4 +168,6 @@ model Budget {
   year      Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId, month, year])
 }

@@ -1,5 +1,41 @@
 # MoneyFlow - Design & Implementation Guidelines
 
+## ⚠️ PROJECT GUIDELINES & RULES
+
+### Core Requirements & Specifications
+
+**MANDATORY:** Before writing any code, designing components, or fixing bugs, you MUST read and strictly adhere to:
+
+1. **`MONEYFLOW_SPEC.md`** — The authoritative technical specification
+   - Read this FIRST for any feature work
+   - All requirements, data models, API endpoints, and acceptance criteria defined here
+   - Reference specific sections in PRs/commits (e.g., "Per MONEYFLOW_SPEC.md (API Design section)...")
+
+2. **`HANDOFF.md`** — Session context and decisions
+   - Quick orientation (5 min read)
+   - Open questions and constraints
+   - Implementation checklist
+
+### Implementation Rules
+
+- ✅ **Before starting ANY feature:** Read the corresponding section in `MONEYFLOW_SPEC.md`
+- ✅ **All features** must match the spec's requirements, data model, and acceptance criteria exactly
+- ✅ **All API endpoints** must follow the spec's endpoint definitions (methods, parameters, response formats)
+- ✅ **All database changes** must align with the Prisma schema in the spec
+- ✅ **All components** must use the glow card system and styling rules from CLAUDE.md (Design System section)
+- ✅ **All forms & inputs** must have hover/focus states per spec requirements
+- ✅ **Testing** must cover the test scenarios defined in MONEYFLOW_SPEC.md (Testing Plan section)
+- ✅ **PRs must reference** the spec section they implement (e.g., "Implements MONEYFLOW_SPEC.md > Features > Recurring Transactions")
+
+### If Something Conflicts with CLAUDE.md
+
+The specification documents take precedence in this order:
+1. **MONEYFLOW_SPEC.md** (MVP requirements, features, technical design)
+2. **HANDOFF.md** (session decisions, open questions)
+3. **CLAUDE.md** (existing design system, patterns, conventions)
+
+---
+
 ## Project Overview
 
 MoneyFlow is a modern financial tracker application with a sleek dark theme, responsive design, and interactive dashboard. Built with React, TypeScript, Tailwind CSS, and Vite.
@@ -21,11 +57,17 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - ✅ Activity summary filters are on the **same line as welcome message** on desktop
 - ✅ **No layout shift** when changing filters - use fixed-height containers with `hidden` class instead of conditional rendering
 - ✅ Maintain responsive design with `lg:flex-row` for desktop, stacked on mobile
-- ✅ **Glow Card Effects** (September 14, 2026):
-  - Inner glow (::before): `opacity: 0.08` (normal - minimal color), `opacity: 0.35` (hover) - keeps cards clean, color appears only on interaction
-  - Border glow (::after): `opacity: 0.7` (normal), `opacity: 1` (hover) - vibrant borders with high contrast
+- ✅ **Glow Card Effects** (September 14-15, 2026):
+  - Inner glow (::before): White-to-color ombre gradient from bottom, fades upward
+  - Border glow (::after): `opacity: 0.35` (normal), `opacity: 0.6` (hover) - subtle colored borders
+  - Side glow accents at bottom corners with left-oval hover effect
   - Each card type has distinct, vibrant color pair for visual variety
-  - Inner glow almost invisible at rest, becomes visible on hover for interactive feedback
+- ✅ **Filter Button Styling** (September 15, 2026):
+  - White borders (1px) with white/10 background
+  - Inner white ombre glow using ::before pseudo-element (matches glow cards)
+  - Active state: Full glow opacity (0.9), white text and border
+  - Hover state: Subtle glow (0.7 opacity) on inactive buttons
+  - Uses `filter-btn` class with positioned ::before element
 
 **Database & Data**:
 - ✅ Run seed script on fresh setup: `npx ts-node prisma/seed.ts`
@@ -143,9 +185,9 @@ Use Tailwind's spacing scale consistently:
 
 ## Component Patterns
 
-### Glow Card System
+### Glow Card System (September 15, 2026 - Glassy Bubble Design)
 
-The core component used throughout the app for any card-based content.
+The core component used throughout the app for any card-based content. Features glassy transparent cards with vibrant bottom ombre glow, subtle colored borders, and elegant hover effects.
 
 **HTML Structure:**
 ```tsx
@@ -160,55 +202,72 @@ The core component used throughout the app for any card-based content.
   position: relative;
   border-radius: 1.5rem;
   padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
+  background: rgba(10, 15, 30, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.3px solid rgba(255, 255, 255, 0.05);
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-/* Gradient border effect */
+/* Muted colored border */
 .glow-card::after {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
   border-radius: 1.5rem;
-  padding: 2px;
+  padding: 1px;
   background: linear-gradient(135deg, var(--color-1), var(--color-2));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
   z-index: 10;
-}
-
-/* Glow effect (blurred background) - minimal inner opacity */
-.glow-card::before {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  border-radius: 1.5rem;
-  background: linear-gradient(135deg, var(--color-1), var(--color-2));
-  z-index: -1;
-  filter: blur(15px);
-  opacity: 0.08;
-  transition: opacity 0.3s ease, filter 0.3s ease;
-  pointer-events: none;
-}
-
-/* Hover state - glow intensifies with border brightening */
-.glow-card::after {
-  opacity: 0.7;
+  opacity: 0.35;
   transition: opacity 0.3s ease;
 }
 
 .glow-card:hover::after {
-  opacity: 1;
+  opacity: 0.6;
+}
+
+/* Bottom ombre glow + side accents + hover left-oval glow */
+.glow-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
 }
 
 .glow-card:hover::before {
-  opacity: 0.35;
-  filter: blur(25px);
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 60% 120% at -10% 50%, var(--glow-color-dim) 0%, rgba(0, 0, 0, 0.3) 30%, transparent 45%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
+    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
+    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
 }
 ```
+
+**Glow Card Features:**
+- **Glassy transparent background** — `rgba(10, 15, 30, 0.3)` with 20px backdrop blur
+- **Ultra-thin border** — 0.3px subtle white border for minimal visual weight
+- **Muted border glow** — Tinted gradient borders (0.35 opacity, 0.6 on hover)
+- **Bottom ombre glow** — White-to-color gradient from bottom edge, fades upward
+- **Side glow accents** — Subtle colored glows at bottom-left and bottom-right corners
+- **Hover left-oval effect** — Darker oval glow from left side that extends to top/bottom edges
 
 **Color Class Definitions:**
 ```css
@@ -326,16 +385,56 @@ Used for binary state toggles (e.g., Include Debt toggle):
 </button>
 ```
 
-**Button (Secondary/Filter):**
+**Button (Secondary/Filter - with Inner Glow, September 15, 2026):**
 ```tsx
-<button className={`py-2 px-4 rounded-full border-2 font-medium transition cursor-pointer ${
+<button className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
   isActive
-    ? "border-purple-400 bg-purple-500/20 text-purple-300"
-    : "border-slate-600 text-gray-300 hover:border-purple-400 hover:bg-slate-700/30"
+    ? "active border-white bg-white/10 text-white"
+    : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
 }`}>
   Filter
 </button>
 ```
+
+**CSS for Filter Buttons (white inner ombre glow):**
+```css
+.filter-btn {
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.filter-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background:
+    linear-gradient(to top, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 3%, transparent 10%),
+    linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 15%, transparent 50%);
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.filter-btn.active::before {
+  opacity: 0.9;
+}
+
+.filter-btn:hover::before {
+  opacity: 0.7;
+}
+```
+
+**Filter Button Features:**
+- **White borders** — Clean, minimal 1px borders
+- **Inner white ombre glow** — Matches glow card design, white gradient from bottom fading upward
+- **Active state** — White border, white/10 background, full opacity glow (0.9)
+- **Hover state** — Subtle glow on inactive buttons (0.7 opacity)
+- **Responsive** — Uses `backdrop-blur-md` for glass effect, matches card aesthetic
 
 **Text Input:**
 ```tsx
@@ -396,13 +495,18 @@ Color variations based on progress:
 
 ### Page Container
 
-All pages use this consistent structure with dark ombre background:
+All pages use this consistent structure with pure black background (September 15, 2026):
 
 ```tsx
-<div className="min-h-screen bg-gradient-to-br from-slate-950 via-gray-900 to-slate-950 p-4 md:p-8">
+<div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
   {/* page content */}
 </div>
 ```
+
+**Background Details:**
+- Uses pure black (#000000) at corners with minimal grey (#0f0f0f) in center
+- Creates subtle depth without color hue (no purple/blue undertones)
+- Pairs perfectly with glassy cards and vibrant glow effects
 
 ### Responsive Grid
 
@@ -640,10 +744,10 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 
 **Overall Structure**:
 - **Left Column** (1fr): 4 metric cards stacked vertically
-  - Net Worth
-  - Available Funds
-  - Savings
-  - Debt
+  - Net Worth (metric only)
+  - Available Funds (metric only)
+  - **Savings (clickable → /savings page)** ⭐ NEW
+  - Debt (metric only)
 - **Right Column** (2fr): 3 large clickable page cards in a grid
   - Transactions
   - Budgeting

@@ -13,10 +13,10 @@ async function seed() {
   try {
     console.log("Starting database seed...");
 
-    // Ensure user exists
+    // Ensure user exists with a placeholder password hash
     await pool.query(
-      `INSERT INTO "User" (id, email, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
-      [DEFAULT_USER_ID, "trish@example.com", "Trish Nguyen"]
+      `INSERT INTO "User" (id, email, "passwordHash", name, "createdAt", "updatedAt") VALUES ($1, $2, $3, $4, NOW(), NOW()) ON CONFLICT (id) DO NOTHING`,
+      [DEFAULT_USER_ID, "trish@example.com", "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36CHqnAs", "Trish Nguyen"]
     );
     console.log("User created or already exists");
 
@@ -34,7 +34,7 @@ async function seed() {
     console.log("Accounts added");
 
     // Add sample transactions
-    const transactions = [
+    const transactions: Array<{ amount: number; type: string; category: string }> = [
       { amount: 2500, type: "income", category: "salary" },
       { amount: 45.99, type: "expense", category: "food" },
       { amount: 120, type: "expense", category: "entertainment" },
@@ -44,12 +44,13 @@ async function seed() {
     ];
 
     for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i]!;
       const date = new Date();
       date.setDate(date.getDate() - i);
       await pool.query(
         `INSERT INTO "Transaction" ("userId", amount, type, category, date, "createdAt")
          VALUES ($1, $2, $3, $4, $5, NOW()) ON CONFLICT DO NOTHING`,
-        [DEFAULT_USER_ID, transactions[i].amount, transactions[i].type, transactions[i].category, date]
+        [DEFAULT_USER_ID, tx.amount, tx.type, tx.category, date]
       );
     }
     console.log("Transactions added");

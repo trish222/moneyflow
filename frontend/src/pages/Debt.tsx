@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiCall } from "../utils/api";
 
 interface DebtItem {
   id: number;
@@ -20,12 +21,12 @@ export default function Debt() {
     const fetchDebts = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:3000/api/debts");
+        const response = await apiCall("/debts");
         const data = await response.json();
         setDebts(data);
 
-        const total = data.reduce((sum: number, debt: DebtItem) => sum + debt.amount, 0);
-        const payments = data.reduce((sum: number, debt: DebtItem) => sum + debt.monthlyPayment, 0);
+        const total = data.reduce((sum: number, debt: DebtItem) => sum + (debt.amount || 0), 0);
+        const payments = data.reduce((sum: number, debt: DebtItem) => sum + (debt.monthlyPayment || 0), 0);
         setTotalDebt(total);
         setTotalMonthlyPayment(payments);
       } catch (error) {
