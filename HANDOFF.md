@@ -801,3 +801,53 @@ cd frontend && npm run dev &
 ### Known Limitations (Expected)
 - Investment ID null in response (minor, doesn't affect functionality)
 - Recurring transactions: endpoints exist but manual-only (cron deferred to Phase 2)
+
+---
+
+## 📌 Session Update (September 21, 2026 - Evening, Part 4: Dashboard Spacing Optimization)
+
+### Dashboard Header Spacing Improvements
+- **Reduced header margins**: Changed `mb-4` to `mb-2` — less space between header and content
+- **Tightened filter alignment**: Changed `gap-4` to `gap-2` on welcome + filter row — brings buttons closer to welcome text
+- **Filter buttons aligned to top**: Changed `lg:items-center` to `lg:items-start` — buttons now align with heading height (not vertically centered)
+- **Reduced dropdown gap**: Changed `gap-3` to `gap-2` — tighter spacing between dropdowns
+- **Preserved layout shift prevention**: Kept `h-10` height reservation on dropdown container — prevents cards from shifting when "All Time" filter has no dropdowns
+- **Result**: Significantly reduced vertical space between welcome text and first card while maintaining stable layout
+- **No commits yet**: Changes staged, not committed per user request
+
+### Key Changes (Dashboard.tsx)
+```jsx
+// Before
+<div className="mb-4 flex flex-col gap-3">
+  <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    // Welcome + filters
+  </div>
+  <div className="flex flex-wrap gap-3 justify-end items-center h-10">
+    // Dropdowns
+  </div>
+</div>
+
+// After
+<div className="mb-2 flex flex-col gap-2">
+  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2">
+    // Welcome + filters (now aligned to top)
+  </div>
+  <div className="flex flex-wrap gap-2 justify-end items-center h-10 -mt-2">
+    // Dropdowns (pulled up 0.5rem, still reserves space)
+  </div>
+</div>
+```
+
+### Spacing Metrics Summary
+| Element | Before | After | Reduction |
+|---------|--------|-------|-----------|
+| Header margin-bottom | `mb-4` (1rem) | `mb-2` (0.5rem) | -0.5rem |
+| Welcome to filters gap | `gap-4` (1rem) | `gap-2` (0.5rem) | -0.5rem |
+| Filters vertical alignment | centered | top-aligned | cleaner alignment |
+| Dropdowns gap | `gap-3` (0.75rem) | `gap-2` (0.5rem) | -0.25rem |
+| Dropdowns top margin | none | `-mt-2` (-0.5rem) | pulls up |
+
+### Ready for Next Session
+- All changes made on main branch
+- No commits created (per user request)
+- Files ready to review before committing

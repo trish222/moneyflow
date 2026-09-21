@@ -355,9 +355,9 @@ export default function Dashboard() {
       `}</style>
 
       {/* Header - Welcome + Filters (Combined) */}
-      <div className="mb-4 flex flex-col gap-3">
+      <div className="mb-2 flex flex-col gap-2">
         {/* Welcome Text + Filter Buttons - Single Row */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
               Welcome, Trish
@@ -425,7 +425,7 @@ export default function Dashboard() {
         </div>
 
         {/* Filter Dropdowns - Directly Below, No Gap */}
-        <div className="flex flex-wrap gap-3 justify-end items-center h-10">
+        <div className="flex flex-wrap gap-2 justify-end items-center h-10 -mt-2">
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(Number(e.target.value))}

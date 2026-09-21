@@ -890,6 +890,38 @@ The dashboard includes both metric cards and clickable navigation cards:
 
 **Implementation:** Clickable cards use `onClick={() => navigate("/path")}` with `cursor-pointer` and `group` classes. Arrow icon animates on hover with `group-hover:translate-x-1`.
 
+#### Dashboard Header Spacing (September 21, 2026 Optimization)
+
+**Compact Header Design** — Minimizes vertical space between welcome text and first card:
+
+```jsx
+<div className="mb-2 flex flex-col gap-2">
+  {/* Welcome text and filter buttons on same row */}
+  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2">
+    <div>
+      <h1>Welcome, Trish</h1>
+      <p>Financial Snapshot</p>
+    </div>
+    {/* Filter buttons */}
+  </div>
+  
+  {/* Filter dropdowns - pulled up slightly */}
+  <div className="flex flex-wrap gap-2 justify-end items-center h-10 -mt-2">
+    {/* Day/Month/Year/All Time dropdowns */}
+  </div>
+</div>
+```
+
+**Spacing Details:**
+- Header margin: `mb-2` (0.5rem) — reduced from `mb-4` (1rem)
+- Welcome to filters gap: `gap-2` (0.5rem) — reduced from `gap-4` (1rem)
+- Button vertical alignment: `lg:items-start` — aligns to heading height instead of center
+- Dropdowns gap: `gap-2` (0.5rem) — reduced from `gap-3` (0.75rem)
+- Dropdowns pull-up: `-mt-2` (-0.5rem) — brings dropdowns closer to buttons
+- **Layout stability:** Reserves `h-10` height to prevent card shift when "All Time" filter hides dropdowns
+
+**Result:** Significantly reduced whitespace while maintaining professional appearance and layout stability.
+
 ---
 
 ## 5. Frontend Implementation
