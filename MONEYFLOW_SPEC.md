@@ -22,16 +22,20 @@ MoneyFlow is a personal finance tracker that helps users manage accounts, transa
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| User Authentication | ✅ Required | JWT tokens in response body, Authorization header |
-| Dashboard Metrics | ✅ Required | Net worth, available funds, recent transactions |
-| Transactions CRUD | ✅ Required | Add, edit, delete, search/filter |
-| Accounts Management | ✅ Required | Multiple accounts per user, account selection |
-| Recurring Transactions API | ✅ Required | Manual POST endpoint only (no cron job) |
-| CSV Import | ✅ Added | Flexible parser, supports headerless/positional formats |
-| Opening Balance | ✅ Added | Set starting account balance via transaction |
-| Budgets | ⏳ Phase 2 | Deferred; design schema only |
-| Investments | ⏳ Phase 2 | Deferred; design schema only |
-| Reports & Analytics | ⏳ Phase 2 | Deferred |
+| User Authentication | ✅ Implemented | JWT tokens in response body, Authorization header, refresh tokens |
+| Dashboard Metrics | ✅ Implemented | Net worth, available funds, recent transactions, investments |
+| Transactions CRUD | ✅ Implemented | Add, edit, delete, search/filter by category & date |
+| Accounts Management | ✅ Implemented | Multiple accounts per user, account selection, balance tracking |
+| Recurring Transactions API | ✅ Implemented | Manual POST endpoint only (no cron job) |
+| CSV Import | ✅ Implemented | Flexible parser, supports headerless/positional formats, 5+ transaction formats |
+| Opening Balance | ✅ Implemented | Set starting account balance via transaction, date validation |
+| Smart Balance Adjustment | ✅ Implemented | Auto-detects opening_balance vs reconciliation transaction type |
+| Budget Tracking | ✅ Implemented | Create budgets, track spent amount dynamically from transactions |
+| Investments | ✅ Implemented | Multi-account support (Brokerage, 401k, Roth IRA, etc.) |
+| Debt Tracking | ✅ Implemented | Create and track debts with amount and interest rate |
+| Savings Goals | ✅ Implemented | Set targets and track progress |
+| Frontend Pages | ✅ Implemented | All 7 pages built and connected (Dashboard, Transactions, Budgets, Investments, Debt, Savings, Reports) |
+| Reports & Analytics | ⏳ Phase 2 | Chart components partially ready, full analytics deferred |
 | Desktop/PWA Offline | ⏳ Phase 2 | Design for it; defer implementation |
 
 ### 1.2 Development Priorities (In Order)
@@ -121,10 +125,10 @@ model Transaction {
   account         Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
   
   amount          Float     // Always positive; type determines sign
-  type            String    // "income" | "expense"
-  category        String    // "salary", "food", "transport", etc.
-  description     String?
-  date            DateTime
+  type            String    // "income" | "expense" | "opening_balance" | "reconciliation"
+  category        String    // "salary", "food", "transport", "other", "reconciliation", etc.
+  description     String?   // User-provided or auto-generated
+  date            DateTime  // Stored in UTC
   
   // Link to recurring rule if auto-created
   recurringTransactionId  Int?
@@ -204,10 +208,21 @@ npx prisma migrate dev --name add_auth_and_recurring
 ### 3.2 Data Integrity Rules
 
 - **Cascade Deletes:** Deleting a user deletes all related records
-- **Account Balance:** Automatically updated when transactions are added/deleted
+- **Account Balance Invariant:** `sum(transactions) = account.balance` (fundamental accounting principle)
+  - Opening balance transactions establish the initial balance
+  - All subsequent transactions adjust from that baseline
+  - Reconciliation transactions correct mid-stream imbalances
 - **User Isolation:** Every query filters by `userId` (enforced in middleware)
-- **Transaction Amounts:** Always positive; `type` field determines income/expense sign
+- **Transaction Types:**
+  - `income`: Money in (salary, bonus, refund)
+  - `expense`: Money out (groceries, utilities, withdrawal)
+  - `opening_balance`: Initial balance for new account (amount = starting balance)
+  - `reconciliation`: Mid-stream balance correction (amount = adjustment amount)
+  - Auto-detected by system based on transaction history
+- **Transaction Amount:** Always positive absolute value; interpretation depends on `type`
+- **Transaction Dates:** Always stored in UTC; filters use UTC boundaries
 - **Recurring Rules:** `nextDue` calculated based on frequency and last created date
+- **Budget Spent:** Calculated dynamically from transactions, not stored; ensures always current
 
 ---
 
@@ -625,6 +640,61 @@ Set opening balance for account (creates opening balance transaction).
 - Updates account balance to specified amount
 - Transaction appears in transaction history with "Opening Balance" description
 
+**Validation:**
+- If account already has transactions before the specified date, returns 400 with error: "Cannot set opening balance to [date]. There are existing transactions before this date."
+- Users should use PUT /accounts/:id/adjust-balance instead for mid-stream adjustments
+
+---
+
+#### PUT /accounts/:id/adjust-balance (NEW)
+Smart balance adjustment that auto-detects transaction type (opening_balance vs reconciliation).
+
+**Request:**
+```json
+{
+  "balance": 5000.00,
+  "date": "2026-09-21"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "message": "Balance adjusted successfully. Created reconciliation transaction.",
+    "account": {
+      "id": 1,
+      "name": "Checking",
+      "type": "checking",
+      "balance": 5000.00
+    },
+    "transaction": {
+      "id": 52,
+      "type": "reconciliation",
+      "amount": -500.00,
+      "description": "Account reconciliation - balance adjusted from 5500.00 to 5000.00",
+      "date": "2026-09-21T00:00:00Z"
+    }
+  },
+  "error": null
+}
+```
+
+**Behavior:**
+- **First time (no existing transactions):** Auto-detects as "opening_balance" type
+- **Mid-stream (has existing transactions):** Auto-detects as "reconciliation" type
+- Calculates adjustment amount automatically: `newBalance - currentBalance`
+- Creates transaction with appropriate type and descriptive message
+- No user selection needed—system determines type based on transaction history
+- Maintains invariant: `sum(transactions) = account.balance` (accounting principle)
+
+**Validation:**
+- Balance must be non-negative number
+- Date must be ISO format string
+- Returns 404 if account doesn't exist or doesn't belong to user
+- Returns 400 if invalid input
+
 ---
 
 ### 4.5 Recurring Transaction Endpoints
@@ -843,6 +913,62 @@ interface AuthContextType {
 // Stores token in localStorage (web/desktop-PWA)
 // Sends as Authorization header in all API calls
 ```
+
+### 5.2.5 API Calling Pattern (CRITICAL)
+
+**All authenticated API calls MUST use the `apiCall()` helper function**, not plain `fetch()`. This ensures the Authorization header is automatically included.
+
+**Example - CORRECT:**
+```typescript
+// frontend/src/utils/api.ts
+export async function apiCall(path: string, options?: RequestInit) {
+  const token = localStorage.getItem('accessToken');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options?.headers || {}),
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(`http://localhost:3000/api${path}`, {
+    ...options,
+    headers,
+  });
+  return response;
+}
+
+// Usage in pages:
+const budgets = await apiCall('/budgets?month=9&year=2026');
+const data = await budgets.json();
+
+// For POST:
+const response = await apiCall('/budgets', {
+  method: 'POST',
+  body: JSON.stringify({ category: 'food', limit: 300 })
+});
+```
+
+**Example - WRONG (will fail with 401):**
+```typescript
+// ❌ DO NOT DO THIS - MISSING AUTHORIZATION HEADER
+const response = await fetch('http://localhost:3000/api/budgets');
+```
+
+**Why This Matters:**
+- Without the Authorization header, protected endpoints return 401 Unauthorized
+- Pages will load but show blank/empty content because API calls fail silently
+- This was the root cause of the Budget page blank white screen issue
+
+**Applied to All Pages:**
+- ✅ Dashboard.tsx
+- ✅ Transactions.tsx
+- ✅ Budgets.tsx (fixed)
+- ✅ Investments.tsx
+- ✅ Debt.tsx
+- ✅ Savings.tsx
+- ✅ Reports.tsx
 
 ### 5.3 TypeScript Interfaces
 
@@ -1291,6 +1417,206 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
   next();
 };
 ```
+
+### 6.3.4 Budget Spent Calculation (Dynamic)
+
+**Key Point:** Budget `spent` is calculated dynamically from transactions, not stored in DB.
+
+```typescript
+// GET /budgets endpoint
+app.get('/api/budgets', authMiddleware, async (req: AuthRequest, res) => {
+  const { month, year } = req.query;
+  const userId = req.userId || DEFAULT_USER_ID;
+
+  // Fetch budgets for month/year
+  const budgets = await prisma.budget.findMany({
+    where: { userId, month: parseInt(month), year: parseInt(year) }
+  });
+
+  // Calculate spent amount for each budget from transactions
+  const budgetsWithSpent = await Promise.all(
+    budgets.map(async (budget) => {
+      // Use UTC date boundaries to match transaction timestamps
+      const startDate = new Date(Date.UTC(year, month - 1, 1)); // First day of month
+      const endDate = new Date(Date.UTC(year, month, 1));       // First day of next month
+
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          userId,
+          category: budget.category,
+          type: 'expense',
+          date: { gte: startDate, lt: endDate }  // UTC comparison
+        }
+      });
+
+      const spent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+      return { ...budget, spent };
+    })
+  );
+
+  res.json(budgetsWithSpent);
+});
+```
+
+**Why UTC Matters:**
+- All transactions stored with UTC timestamps
+- Local timezone offsets would cause date filtering to miss/include wrong transactions
+- Use `Date.UTC()` to ensure consistent date boundaries across all timezones
+
+**Example:**
+- Budget: Food, Sept 2026, $300 limit
+- Transactions: $50 (Sept 2), $30 (Sept 5)
+- Spent calculation: $50 + $30 = $80
+- Percentage: (80 / 300) * 100 = 26.67%
+
+### 6.3.4.5 CSV Import Parser
+
+**Flexible Parser Supports Multiple Formats:**
+
+```typescript
+// src/utils/csvParser.ts
+interface CsvTransaction {
+  date: string;
+  amount: number;
+  type: 'income' | 'expense';
+  category: string;
+  description: string;
+}
+
+export function parseCSV(csvText: string): {
+  transactions: CsvTransaction[];
+  errors: Array<{ row: number; error: string }>;
+} {
+  const lines = csvText.trim().split('\n');
+  const transactions: CsvTransaction[] = [];
+  const errors: Array<{ row: number; error: string }> = [];
+
+  // Auto-detect headers
+  const hasHeaders = detectHeaders(lines[0]);
+  const startRow = hasHeaders ? 1 : 0;
+
+  lines.slice(startRow).forEach((line, index) => {
+    try {
+      const row = parseRow(line, hasHeaders, index + startRow + 1);
+      if (row) transactions.push(row);
+    } catch (error) {
+      errors.push({ row: index + startRow + 1, error: error.message });
+    }
+  });
+
+  return { transactions, errors };
+}
+
+function detectHeaders(firstLine: string): boolean {
+  // Check for keywords: date, amount, type, category, description
+  return /date|amount|type|category|description/i.test(firstLine);
+}
+
+function parseRow(line: string, hasHeaders: boolean, rowNum: number): CsvTransaction | null {
+  const columns = line.split(',').map(c => c.trim());
+  
+  if (!hasHeaders) {
+    // Positional: [date, amount, type?, category?, description?]
+    return {
+      date: columns[0],
+      amount: parseFloat(columns[1]),
+      type: detectType(columns[2] || ''),
+      category: columns[3] || 'uncategorized',
+      description: columns[4] || ''
+    };
+  } else {
+    // Header-based: find by column name
+    // ... map columns to fields
+  }
+}
+
+function detectType(typeStr: string): 'income' | 'expense' {
+  const lowerStr = typeStr.toLowerCase();
+  if (/income|deposit|salary|bonus/.test(lowerStr)) return 'income';
+  return 'expense'; // Default to expense
+}
+```
+
+**Supported Formats:**
+1. **Headerless positional:** `2026-09-01,100.00,expense,food,grocery`
+2. **Headers:** `date,amount,type,category,description`
+3. **Minimal:** `2026-09-01,100.00` (auto-detects as expense, uncategorized)
+4. **Type inference:** "Salary" → income, "Lunch" → expense
+
+**Error Handling:**
+- Returns detailed errors with row numbers
+- Skips invalid rows, imports valid ones
+- Returns summary: "5 transactions imported, 1 error"
+
+### 6.3.5 Account Balance Management
+
+**Key Invariant:** `sum(transactions) = account.balance` (fundamental accounting principle)
+
+#### Opening Balance Validation (PUT /accounts/:id/set-balance)
+
+```typescript
+// Before creating opening_balance transaction, validate no earlier transactions exist
+const existingTransactions = await prisma.transaction.findMany({
+  where: {
+    accountId: accountId,
+    date: { lt: new Date(requestedDate) }  // Transactions BEFORE the opening balance date
+  }
+});
+
+if (existingTransactions.length > 0) {
+  throw new ValidationError(
+    'date',
+    `Cannot set opening balance to ${requestedDate}. There are existing transactions before this date.`
+  );
+}
+```
+
+**Rationale:** Setting an opening balance date in the past, after existing transactions, creates a logical inconsistency. For example:
+- Account has transaction from Sept 1 for $100
+- User tries to set opening balance to Sept 15
+- This implies: balance was set on Sept 15, but transactions exist from Sept 1 → impossible
+
+#### Smart Balance Adjustment (PUT /accounts/:id/adjust-balance)
+
+```typescript
+// Auto-detect transaction type based on transaction history
+const existingTransactions = await prisma.transaction.findMany({
+  where: { accountId: accountId }
+});
+
+const transactionType = existingTransactions.length === 0
+  ? 'opening_balance'  // First time: no history
+  : 'reconciliation';   // Mid-stream: user reconciling existing balance
+
+// Calculate adjustment amount
+const currentBalance = account.balance;
+const adjustmentAmount = newBalance - currentBalance;
+
+// Create transaction with auto-detected type
+const transaction = await prisma.transaction.create({
+  data: {
+    accountId,
+    userId,
+    type: transactionType,
+    amount: adjustmentAmount,
+    category: transactionType === 'opening_balance' ? 'other' : 'reconciliation',
+    description: `Account ${transactionType === 'opening_balance' ? 'opening balance' : 'reconciliation'} - balance adjusted from ${currentBalance.toFixed(2)} to ${newBalance.toFixed(2)}`,
+    date: new Date(requestedDate),
+  }
+});
+
+// Update account balance
+await prisma.account.update({
+  where: { id: accountId },
+  data: { balance: newBalance }
+});
+```
+
+**Benefits of Smart Detection:**
+- Simpler UX: No user selection needed
+- System determines intent from data
+- Clear audit trail (type shows whether opening or reconciliation)
+- Prevents user confusion (no form dropdown to misunderstand)
 
 ### 6.4 Error Handling
 
