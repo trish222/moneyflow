@@ -531,11 +531,31 @@ export default function Dashboard() {
           </div>
 
           {/* Debt Card */}
-          <div className="glow-card glow-purple">
-            <h3 className="text-white font-semibold mb-3">Debt</h3>
-            <p className="text-3xl font-bold text-purple-300">
-              ${metrics.debts.toFixed(2)}
-            </p>
+          <div
+            onClick={() => navigate("/debt")}
+            className="glow-card glow-purple cursor-pointer group"
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="text-white font-semibold mb-3">Debt</h3>
+                <p className="text-3xl font-bold text-purple-300">
+                  ${metrics.debts.toFixed(2)}
+                </p>
+              </div>
+              <svg
+                className="w-6 h-6 text-purple-400 group-hover:translate-x-1 transition"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
