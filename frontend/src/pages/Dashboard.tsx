@@ -112,12 +112,12 @@ export default function Dashboard() {
     : metrics.availableFunds;
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
+    <div className="h-screen flex flex-col overflow-hidden p-4 md:p-6 lg:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
       <style>{`
         .glow-card {
           position: relative;
           border-radius: 1.5rem;
-          padding: 1.5rem;
+          padding: 1.25rem;
           background: rgba(10, 15, 30, 0.3);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
@@ -273,19 +273,31 @@ export default function Dashboard() {
           opacity: 0.7;
         }
 
+        /* Dashboard container - fills available space */
+        .dashboard-container {
+          flex: 1;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+
         /* Masonry Staggered Layout */
         .dashboard-layout {
           display: grid;
-          grid-template-columns: 1fr 2fr;
-          gap: 2rem;
+          grid-template-columns: 0.85fr 1.5fr;
+          gap: 1.5rem;
           align-items: start;
+          flex: 1;
+          min-height: 0;
         }
 
         /* Left column - metric cards */
         .metrics-column {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 1.2rem;
+          min-height: 0;
         }
 
         .metric-card {
@@ -293,97 +305,127 @@ export default function Dashboard() {
           cursor: pointer;
         }
 
-
         /* Right column - large cards grid */
         .cards-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 2rem;
+          gap: 1.5rem;
           grid-auto-rows: max-content;
+          min-height: 0;
+        }
+
+        @media (max-width: 1280px) {
+          .dashboard-layout {
+            grid-template-columns: 0.8fr 1fr;
+            gap: 1.2rem;
+          }
+          .metrics-column {
+            gap: 1rem;
+          }
+          .cards-grid {
+            gap: 1.2rem;
+          }
         }
 
         @media (max-width: 1024px) {
           .dashboard-layout {
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 1rem;
           }
 
+          .cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+          .metrics-column {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .metrics-column {
+            grid-template-columns: repeat(2, 1fr);
+          }
           .cards-grid {
             grid-template-columns: 1fr;
           }
         }
       `}</style>
 
-      {/* Header with Activity Summary Filters */}
-      <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-            Welcome, Trish
-          </h1>
-          <p className="text-purple-300">Financial Snapshot</p>
+      {/* Header - Welcome + Filters (Combined) */}
+      <div className="mb-4 flex flex-col gap-3">
+        {/* Welcome Text + Filter Buttons - Single Row */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
+              Welcome, Trish
+            </h1>
+            <p className="text-purple-300 text-sm">Financial Snapshot</p>
+          </div>
+
+          {/* Activity Summary - Filter Buttons */}
+          <div className="flex flex-wrap justify-start lg:justify-end gap-2">
+            <button
+              onClick={() => setFilterType("day")}
+              className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+                filterType === "day"
+                  ? "active border-white bg-white/10 text-white"
+                  : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
+              }`}
+            >
+              Day
+            </button>
+
+            <button
+              onClick={() => setFilterType("week")}
+              className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+                filterType === "week"
+                  ? "active border-white bg-white/10 text-white"
+                  : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
+              }`}
+            >
+              Week
+            </button>
+
+            <button
+              onClick={() => setFilterType("month")}
+              className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+                filterType === "month"
+                  ? "active border-white bg-white/10 text-white"
+                  : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
+              }`}
+            >
+              Month
+            </button>
+
+            <button
+              onClick={() => setFilterType("year")}
+              className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+                filterType === "year"
+                  ? "active border-white bg-white/10 text-white"
+                  : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
+              }`}
+            >
+              Year
+            </button>
+
+            <button
+              onClick={() => setFilterType("all")}
+              className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+                filterType === "all"
+                  ? "active border-white bg-white/10 text-white"
+                  : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
+              }`}
+            >
+              All Time
+            </button>
+          </div>
         </div>
 
-        {/* Activity Summary - Horizontal Bar */}
-        <div className="flex flex-wrap justify-start lg:justify-end gap-2">
-        <button
-          onClick={() => setFilterType("day")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
-            filterType === "day"
-              ? "active border-white bg-white/10 text-white"
-              : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
-          }`}
-        >
-          Day
-        </button>
-
-        <button
-          onClick={() => setFilterType("week")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
-            filterType === "week"
-              ? "active border-white bg-white/10 text-white"
-              : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
-          }`}
-        >
-          Week
-        </button>
-
-        <button
-          onClick={() => setFilterType("month")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
-            filterType === "month"
-              ? "active border-white bg-white/10 text-white"
-              : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
-          }`}
-        >
-          Month
-        </button>
-
-        <button
-          onClick={() => setFilterType("year")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
-            filterType === "year"
-              ? "active border-white bg-white/10 text-white"
-              : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
-          }`}
-        >
-          Year
-        </button>
-
-        <button
-          onClick={() => setFilterType("all")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
-            filterType === "all"
-              ? "active border-white bg-white/10 text-white"
-              : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
-          }`}
-        >
-          All Time
-        </button>
-        </div>
-      </div>
-
-      {/* Selectors for Filters - Reserved Space */}
-      <div className="mb-6 flex flex-wrap gap-3 justify-end h-10">
+        {/* Filter Dropdowns - Directly Below, No Gap */}
+        <div className="flex flex-wrap gap-3 justify-end items-center h-10">
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(Number(e.target.value))}
@@ -427,10 +469,11 @@ export default function Dashboard() {
             </option>
           ))}
         </select>
+        </div>
       </div>
 
       {/* Main Content - Masonry Staggered Layout */}
-      <div className="dashboard-layout">
+      <div className="dashboard-layout flex-1 min-h-0">
         {/* Left Column - Metric Cards */}
         <div className="metrics-column">
           {/* Net Worth Card */}
