@@ -112,12 +112,12 @@ export default function Dashboard() {
     : metrics.availableFunds;
 
   return (
-    <div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
+    <div className="h-screen overflow-y-auto p-2 md:p-4 lg:p-6" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
       <style>{`
         .glow-card {
           position: relative;
           border-radius: 1.5rem;
-          padding: 1.5rem;
+          padding: 0.75rem;
           background: rgba(10, 15, 30, 0.3);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
@@ -273,11 +273,11 @@ export default function Dashboard() {
           opacity: 0.7;
         }
 
-        /* Masonry Staggered Layout */
+        /* Masonry Staggered Layout - Responsive */
         .dashboard-layout {
           display: grid;
-          grid-template-columns: 1fr 2fr;
-          gap: 2rem;
+          grid-template-columns: minmax(180px, 0.7fr) 1fr;
+          gap: 0.75rem;
           align-items: start;
         }
 
@@ -285,7 +285,7 @@ export default function Dashboard() {
         .metrics-column {
           display: flex;
           flex-direction: column;
-          gap: 1.5rem;
+          gap: 0.5rem;
         }
 
         .metric-card {
@@ -293,21 +293,49 @@ export default function Dashboard() {
           cursor: pointer;
         }
 
-
         /* Right column - large cards grid */
         .cards-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 2rem;
+          gap: 0.75rem;
           grid-auto-rows: max-content;
+        }
+
+        @media (max-width: 1280px) {
+          .dashboard-layout {
+            grid-template-columns: minmax(160px, 0.65fr) 1fr;
+            gap: 0.5rem;
+          }
+          .metrics-column {
+            gap: 0.4rem;
+          }
+          .cards-grid {
+            gap: 0.5rem;
+          }
         }
 
         @media (max-width: 1024px) {
           .dashboard-layout {
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 0.75rem;
           }
 
+          .cards-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+          }
+
+          .metrics-column {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.4rem;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .metrics-column {
+            grid-template-columns: repeat(2, 1fr);
+          }
           .cards-grid {
             grid-template-columns: 1fr;
           }
@@ -315,19 +343,19 @@ export default function Dashboard() {
       `}</style>
 
       {/* Header with Activity Summary Filters */}
-      <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      <div className="mb-2 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+          <h1 className="text-lg md:text-xl lg:text-2xl font-bold text-white mb-0">
             Welcome, Trish
           </h1>
-          <p className="text-purple-300">Financial Snapshot</p>
+          <p className="text-xs md:text-sm text-purple-300">Financial Snapshot</p>
         </div>
 
         {/* Activity Summary - Horizontal Bar */}
-        <div className="flex flex-wrap justify-start lg:justify-end gap-2">
+        <div className="flex flex-wrap justify-start lg:justify-end gap-1">
         <button
           onClick={() => setFilterType("day")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+          className={`filter-btn py-1 px-2 text-xs rounded-full border font-medium transition backdrop-blur-md relative ${
             filterType === "day"
               ? "active border-white bg-white/10 text-white"
               : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
@@ -338,7 +366,7 @@ export default function Dashboard() {
 
         <button
           onClick={() => setFilterType("week")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+          className={`filter-btn py-1 px-2 text-xs rounded-full border font-medium transition backdrop-blur-md relative ${
             filterType === "week"
               ? "active border-white bg-white/10 text-white"
               : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
@@ -349,7 +377,7 @@ export default function Dashboard() {
 
         <button
           onClick={() => setFilterType("month")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+          className={`filter-btn py-1 px-2 text-xs rounded-full border font-medium transition backdrop-blur-md relative ${
             filterType === "month"
               ? "active border-white bg-white/10 text-white"
               : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
@@ -360,7 +388,7 @@ export default function Dashboard() {
 
         <button
           onClick={() => setFilterType("year")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+          className={`filter-btn py-1 px-2 text-xs rounded-full border font-medium transition backdrop-blur-md relative ${
             filterType === "year"
               ? "active border-white bg-white/10 text-white"
               : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
@@ -371,23 +399,23 @@ export default function Dashboard() {
 
         <button
           onClick={() => setFilterType("all")}
-          className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm backdrop-blur-md relative ${
+          className={`filter-btn py-1 px-2 text-xs rounded-full border font-medium transition backdrop-blur-md relative ${
             filterType === "all"
               ? "active border-white bg-white/10 text-white"
               : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
           }`}
         >
-          All Time
+          All
         </button>
         </div>
       </div>
 
       {/* Selectors for Filters - Reserved Space */}
-      <div className="mb-6 flex flex-wrap gap-3 justify-end h-10">
+      <div className="mb-1 flex flex-wrap gap-1 justify-end h-6">
         <select
           value={selectedDay}
           onChange={(e) => setSelectedDay(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition ${
+          className={`px-2 py-0.5 bg-slate-800 border border-slate-600 rounded text-gray-300 text-xs cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition ${
             filterType === "day" || filterType === "week" ? "" : "hidden"
           }`}
         >
@@ -400,7 +428,7 @@ export default function Dashboard() {
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition ${
+          className={`px-2 py-0.5 bg-slate-800 border border-slate-600 rounded text-gray-300 text-xs cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition ${
             filterType === "week" || filterType === "month" ? "" : "hidden"
           }`}
         >
@@ -413,7 +441,7 @@ export default function Dashboard() {
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className={`px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition ${
+          className={`px-2 py-0.5 bg-slate-800 border border-slate-600 rounded text-gray-300 text-xs cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition ${
             filterType === "week" ||
             filterType === "month" ||
             filterType === "year"
@@ -435,17 +463,18 @@ export default function Dashboard() {
         <div className="metrics-column">
           {/* Net Worth Card */}
           <div className="glow-card glow-red">
-            <div className="flex justify-between items-start mb-6">
-              <h3 className="text-white font-semibold text-lg">Net Worth</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-red-300">Include Debt</span>
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="text-white font-semibold text-xs md:text-sm">Net Worth</h3>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <span className="text-xs text-red-300 hidden sm:inline">Include Debt</span>
                 <div
                   onClick={() => setIncludeDebt(!includedDebt)}
                   className={`toggle-switch ${includedDebt ? "active" : ""}`}
+                  style={{ width: '35px', height: '20px' }}
                 />
               </div>
             </div>
-            <p className="text-5xl md:text-6xl font-bold text-red-300 mb-4">
+            <p className="text-xl md:text-2xl lg:text-3xl font-bold text-red-300 mb-0.5 leading-tight">
               ${displayNetWorth.toFixed(2)}
             </p>
             <p className="text-xs text-gray-400">↑ 0.05%</p>
@@ -453,8 +482,8 @@ export default function Dashboard() {
 
           {/* Available Funds Card */}
           <div className="glow-card glow-cyan">
-            <h3 className="text-white font-semibold mb-3">Available Funds</h3>
-            <p className="text-3xl font-bold text-cyan-300">
+            <h3 className="text-white font-semibold mb-1 text-xs md:text-sm">Available Funds</h3>
+            <p className="text-base md:text-lg lg:text-xl font-bold text-cyan-300">
               ${metrics.availableFunds.toFixed(2)}
             </p>
           </div>
@@ -464,15 +493,15 @@ export default function Dashboard() {
             onClick={() => navigate("/savings")}
             className="glow-card glow-blue cursor-pointer group"
           >
-            <div className="flex justify-between items-start mb-6">
+            <div className="flex justify-between items-start mb-1">
               <div>
-                <h3 className="text-white font-semibold mb-3">Savings</h3>
-                <p className="text-3xl font-bold text-blue-300">
+                <h3 className="text-white font-semibold mb-1 text-xs md:text-sm">Savings</h3>
+                <p className="text-base md:text-lg lg:text-xl font-bold text-blue-300">
                   ${metrics.savings.toFixed(2)}
                 </p>
               </div>
               <svg
-                className="w-6 h-6 text-blue-400 group-hover:translate-x-1 transition"
+                className="w-4 h-4 text-blue-400 group-hover:translate-x-1 transition flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -489,8 +518,8 @@ export default function Dashboard() {
 
           {/* Debt Card */}
           <div className="glow-card glow-purple">
-            <h3 className="text-white font-semibold mb-3">Debt</h3>
-            <p className="text-3xl font-bold text-purple-300">
+            <h3 className="text-white font-semibold mb-1 text-xs md:text-sm">Debt</h3>
+            <p className="text-base md:text-lg lg:text-xl font-bold text-purple-300">
               ${metrics.debts.toFixed(2)}
             </p>
           </div>
@@ -504,10 +533,10 @@ export default function Dashboard() {
               onClick={() => navigate("/transactions")}
               className="glow-card glow-cyan cursor-pointer group"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Transactions</h2>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm md:text-base lg:text-lg font-bold text-white">Transactions</h2>
                 <svg
-                  className="w-6 h-6 text-cyan-400 group-hover:translate-x-1 transition"
+                  className="w-4 h-4 md:w-5 md:h-5 text-cyan-400 group-hover:translate-x-1 transition flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -521,18 +550,18 @@ export default function Dashboard() {
                 </svg>
               </div>
 
-              <div className="space-y-4">
-                <div className="border-l-4 border-green-400 pl-4 py-2">
-                  <p className="text-gray-400 text-sm">Income</p>
-                  <p className="text-lg font-bold text-green-400">
+              <div className="space-y-1.5 text-xs md:text-sm">
+                <div className="border-l-4 border-green-400 pl-2 py-1">
+                  <p className="text-gray-400 text-xs">Income</p>
+                  <p className="text-sm md:text-base font-bold text-green-400">
                     +${totalIncome.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-500">this month</p>
                 </div>
 
-                <div className="border-l-4 border-red-400 pl-4 py-2">
-                  <p className="text-gray-400 text-sm">Expense</p>
-                  <p className="text-lg font-bold text-red-400">
+                <div className="border-l-4 border-red-400 pl-2 py-1">
+                  <p className="text-gray-400 text-xs">Expense</p>
+                  <p className="text-sm md:text-base font-bold text-red-400">
                     -${totalExpense.toFixed(2)}
                   </p>
                   <p className="text-xs text-gray-500">this month</p>
@@ -545,10 +574,10 @@ export default function Dashboard() {
               onClick={() => navigate("/budgets")}
               className="glow-card glow-purple cursor-pointer group"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Budgeting</h2>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm md:text-base lg:text-lg font-bold text-white">Budgeting</h2>
                 <svg
-                  className="w-6 h-6 text-purple-400 group-hover:translate-x-1 transition"
+                  className="w-4 h-4 md:w-5 md:h-5 text-purple-400 group-hover:translate-x-1 transition flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -563,7 +592,7 @@ export default function Dashboard() {
               </div>
 
               {budgets.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-1.5 text-xs">
                   {budgets.slice(0, 2).map((budget) => {
                     const percentage = (budget.spent / budget.limit) * 100;
                     let barColor = "bg-blue-500";
@@ -572,18 +601,18 @@ export default function Dashboard() {
 
                     return (
                       <div key={budget.id}>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-gray-300 capitalize text-sm">
+                        <div className="flex justify-between mb-0.5 text-xs">
+                          <span className="text-gray-300 capitalize">
                             {budget.category}
                           </span>
-                          <span className="text-xs text-gray-400">
+                          <span className="text-gray-400">
                             ${budget.spent.toFixed(0)} / $
                             {budget.limit.toFixed(0)}
                           </span>
                         </div>
-                        <div className="w-full bg-slate-700 rounded-full h-2">
+                        <div className="w-full bg-slate-700 rounded-full h-1.5">
                           <div
-                            className={`${barColor} h-2 rounded-full transition-all`}
+                            className={`${barColor} h-1.5 rounded-full transition-all`}
                             style={{ width: `${Math.min(percentage, 100)}%` }}
                           ></div>
                         </div>
@@ -592,7 +621,7 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : (
-                <p className="text-gray-400 text-sm">No budgets set yet</p>
+                <p className="text-gray-400 text-xs">No budgets set yet</p>
               )}
             </div>
 
@@ -601,10 +630,10 @@ export default function Dashboard() {
               onClick={() => navigate("/investments")}
               className="glow-card glow-green cursor-pointer group"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">Investments</h2>
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-sm md:text-base lg:text-lg font-bold text-white">Investments</h2>
                 <svg
-                  className="w-6 h-6 text-green-400 group-hover:translate-x-1 transition"
+                  className="w-4 h-4 md:w-5 md:h-5 text-green-400 group-hover:translate-x-1 transition flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -618,15 +647,15 @@ export default function Dashboard() {
                 </svg>
               </div>
 
-              <div className="space-y-3">
-                <div className="border-l-4 border-green-400 pl-4 py-2">
-                  <p className="text-gray-400 text-sm">Total Invested</p>
-                  <p className="text-2xl font-bold text-green-300">
+              <div className="space-y-1 text-xs">
+                <div className="border-l-4 border-green-400 pl-2 py-1">
+                  <p className="text-gray-400 text-xs">Total Invested</p>
+                  <p className="text-sm md:text-base font-bold text-green-300">
                     ${metrics.investmentsValue.toFixed(2)}
                   </p>
                 </div>
                 <p className="text-xs text-gray-400">
-                  View detailed portfolio breakdown
+                  View portfolio breakdown
                 </p>
               </div>
             </div>
