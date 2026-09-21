@@ -1051,15 +1051,15 @@ app.get("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
     // Calculate spent amount for each budget from transactions
     const budgetsWithSpent = await Promise.all(
       budgets.map(async (budget) => {
-        const startDate = new Date(
+        const startDate = new Date(Date.UTC(
           budget.year,
           budget.month - 1,
           1,
           0,
           0,
           0
-        );
-        const endDate = new Date(budget.year, budget.month, 0, 23, 59, 59);
+        ));
+        const endDate = new Date(Date.UTC(budget.year, budget.month, 0, 23, 59, 59));
 
         const transactions = await prisma.transaction.findMany({
           where: {
