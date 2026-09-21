@@ -29,8 +29,8 @@ export default function Budgets() {
 
   const fetchBudgets = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/budgets?month=${selectedMonth}&year=${selectedYear}`
+      const response = await apiCall(
+        `/budgets?month=${selectedMonth}&year=${selectedYear}`
       );
       const data = await response.json();
       setBudgets(data);
