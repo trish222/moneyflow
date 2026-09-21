@@ -744,10 +744,10 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 
 **Overall Structure**:
 - **Left Column** (1fr): 4 metric cards stacked vertically
-  - Net Worth
-  - Available Funds
-  - Savings
-  - Debt
+  - Net Worth (metric only)
+  - Available Funds (metric only)
+  - **Savings (clickable → /savings page)** ⭐ NEW
+  - Debt (metric only)
 - **Right Column** (2fr): 3 large clickable page cards in a grid
   - Transactions
   - Budgeting

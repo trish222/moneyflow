@@ -722,6 +722,17 @@ cd frontend && npm run dev &
 
 ---
 
+## 📌 Session Summary (September 21, 2026 - Evening, Part 2)
+
+### New Feature: Clickable Savings Card
+- **Made Savings card clickable** on Dashboard → navigates to /savings page
+- **Matches UX pattern** of other page cards (Transactions, Budgets, Investments)
+- **Arrow icon with hover animation** for visual feedback
+- **Commit**: 73b4b3c "feat: make Savings card clickable on Dashboard"
+- **Updated**: CLAUDE.md + MONEYFLOW_SPEC.md with dashboard navigation docs
+
+---
+
 ## 📌 Session Summary (September 21, 2026 - Evening)
 
 ### Issues Found & Fixed

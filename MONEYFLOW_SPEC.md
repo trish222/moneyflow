@@ -872,6 +872,24 @@ Get key metrics for dashboard display.
 - recentTransactions = last 5 transactions, ordered by date DESC
 - upcomingRecurring = recurring rules due in next 7 days (isActive=true)
 
+#### Dashboard Navigation
+
+**Clickable Cards on Dashboard:**
+The dashboard includes both metric cards and clickable navigation cards:
+
+**Metric Cards (Left Column):**
+- Net Worth: Shows combined account balance (toggleable to exclude debt)
+- Available Funds: Shows checking/savings only
+- **Savings: Clickable → navigates to /savings page** ⭐
+- Debt: Shows total outstanding debt
+
+**Page Cards (Right Column):**
+- Transactions: Clickable → /transactions
+- Budgeting: Clickable → /budgets
+- Investments: Clickable → /investments
+
+**Implementation:** Clickable cards use `onClick={() => navigate("/path")}` with `cursor-pointer` and `group` classes. Arrow icon animates on hover with `group-hover:translate-x-1`.
+
 ---
 
 ## 5. Frontend Implementation
