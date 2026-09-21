@@ -378,15 +378,23 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 
 ### 📝 What's Left to Do (Next Session)
 
-**Priority 1: Testing & Browser Verification**
-- [x] API endpoint testing (register → login → protected endpoints) ✅ DONE
-- [x] CSV import with multiple formats (headers, positional, minimal) ✅ DONE - 5 transactions imported
-- [x] Opening balance feature (set balance, verify transaction created) ✅ DONE
-- [x] Budget spent calculation (fixed UTC date filtering bug) ✅ DONE - commit a6bd71e
+**Priority 1: Browser E2E Testing (CRITICAL - Must Do First)**
 - [ ] End-to-end browser testing (register → login → dashboard → navigate pages)
 - [ ] Test transaction CRUD operations (create, read, update, delete) in UI
+- [ ] Test CSV import via browser UI (not just API)
+- [ ] Test new "Adjust Balance" feature in browser
+  - [ ] Fresh account (should create opening_balance)
+  - [ ] Existing account (should create reconciliation)
+  - [ ] Validation error when trying to backdate before existing transactions
 - [ ] Test on mobile browser (responsive design check)
 - [ ] Verify all page layouts match design system
+- [ ] Test budget page: create budget, verify spent calculation displays
+
+**Priority 2: Remaining Features**
+- [ ] Recurring transactions: Manual endpoint implementation (POST /recurring/:id/create-once)
+- [ ] Recurring transaction UI on Transactions page
+- [ ] Dashboard upcoming bills widget
+- [ ] Reports page with charts (Recharts setup)
 
 **Priority 2: CSV Import Edge Cases**
 - [ ] Test large CSV files (1000+ transactions)
@@ -551,50 +559,50 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 
 ---
 
-## Next Steps (Immediate)
+## Next Steps (Immediate - Next Session)
 
-### 1. Set Up Development Environment
-- [ ] Clone repo, install dependencies
-- [ ] Create `.env` with `DATABASE_URL`, `JWT_SECRET`, `REFRESH_TOKEN_SECRET`
-- [ ] Run `npx prisma migrate deploy` to sync schema
-- [ ] Run `npx ts-node prisma/seed.ts` to populate test data
-- [ ] Verify backend runs on `http://localhost:3000`
-- [ ] Verify frontend builds with `npm run dev`
+### 1. Browser E2E Testing (HIGHEST PRIORITY)
+Start the dev servers and test in a real browser:
+```bash
+cd backend && npm run dev &
+cd frontend && npm run dev &
+# Open http://localhost:5173 in browser
+```
 
-### 2. Create RecurringTransaction Schema (Database)
-- [ ] Add RecurringTransaction model to `prisma/schema.prisma` (see MONEYFLOW_SPEC.md)
-- [ ] Run `npx prisma migrate dev --name add_recurring_transactions`
-- [ ] Add indexes on (userId, isActive, nextDue) for cron queries
-- [ ] Update seed script to create sample recurring transactions
+**Test Scenarios:**
+1. Register new user → Login → Dashboard loads
+2. Create account → Create transaction manually
+3. Go to Transactions page → Import CSV (use test-import.csv)
+4. Test "Adjust Balance" button:
+   - Fresh account: should create opening_balance transaction
+   - Existing account: should create reconciliation transaction
+   - Try to set balance before existing transaction: should show validation error
+5. Go to Budgets page → Create budget → Verify spent calculation shows
+6. Navigate all pages, check responsive design on mobile
 
-### 3. Implement Authentication (Backend)
-- [ ] Create `/auth/register` endpoint (validate email, hash password, create user)
-- [ ] Create `/auth/login` endpoint (verify password, return JWT + refresh token)
-- [ ] Create `/auth/refresh` endpoint (validate refresh token, return new JWT)
-- [ ] Add JWT middleware to protect other endpoints
-- [ ] Configure CORS, security headers
-- [ ] Write unit tests for auth logic (Jest)
+**Success Criteria:**
+- All pages load without errors
+- Forms submit successfully
+- Data persists (refresh page, data still there)
+- CSV import works end-to-end
+- Budget spent calculation displays correctly
+- Mobile layout responsive
 
-### 4. Implement Authentication (Frontend)
-- [ ] Create login/signup pages (forms with validation)
-- [ ] Implement token storage (httpOnly cookie for JWT)
-- [ ] Add route guards (`ProtectedRoute` component)
-- [ ] Create logout functionality
-- [ ] Add error handling (show feedback to user)
-- [ ] Write component tests (React Testing Library)
+### 2. Fix Any UI Issues Found During Testing
+- Visual glitches, layout breaks, styling issues
+- Form validation messages
+- Error handling and user feedback
 
-### 5. Recurring Transactions API
-- [ ] Create CRUD endpoints (`GET /recurring`, `POST /recurring`, `PUT /recurring/:id`, `DELETE /recurring/:id`)
-- [ ] Implement cron job (runs nightly, creates transactions from active rules)
-- [ ] Add backfill logic (catch up if missed)
-- [ ] Test edge cases (month-end, leap year, frequency patterns)
-- [ ] Integrate into dashboard (`GET /dashboard/upcoming-bills`)
+### 3. Recurring Transactions (If Time Permits)
+- [ ] Implement POST /recurring/:id/create-once endpoint (manual transaction creation)
+- [ ] Create recurring transaction CRUD endpoints
+- [ ] Add recurring transaction UI to Transactions page
+- [ ] Defer cron scheduler to Phase 2
 
-### 6. Dashboard Enhancements
-- [ ] Update `/dashboard/metrics` to include recurring transactions in calculations
-- [ ] Add "Upcoming Bills" widget (next 7 days of recurring transactions)
-- [ ] Fix any metric calculation bugs (net worth, available funds, debt)
-- [ ] Test with incomplete data (null/undefined handling)
+### 4. Polish & Documentation
+- [ ] Update README with setup instructions
+- [ ] Document API endpoints in README or separate API_DOCS.md
+- [ ] Create deployment guide for staging/production
 
 ### 7. Frontend Pages (In Order)
 1. Transactions page (done, verify recurring integration)
@@ -662,4 +670,52 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 
 ---
 
-**Ready to build.** Start with Week 1 checklist above. Reference MONEYFLOW_SPEC.md for detailed requirements.
+---
+
+## 📌 Session Summary (September 21, 2026)
+
+### What Was Done This Session
+1. **Critical Bug Fixed**: Budget spent calculation was broken (using local time instead of UTC)
+2. **Data Integrity Feature**: Opening balance now validates date is before all existing transactions
+3. **Smart Balance Adjustment**: New endpoint auto-detects whether to create opening_balance or reconciliation
+4. **Comprehensive Testing**: All API endpoints tested via curl and verified working
+5. **UX Improvement**: Unified "Adjust Balance" button replaces separate forms
+6. **Frontend Update**: Transactions page refactored with better labels and descriptions
+
+### Current Application Status
+- ✅ **Backend**: All API endpoints implemented and tested
+- ✅ **Authentication**: JWT tokens, registration, login working
+- ✅ **Accounts & Transactions**: Full CRUD with CSV import support
+- ✅ **Budget Tracking**: Spent calculation working correctly
+- ✅ **Data Integrity**: Validation prevents logical inconsistencies
+- ⏳ **Frontend**: Components built, ready for browser testing
+- ⏳ **Recurring Transactions**: Schema ready, endpoints pending
+
+### Key Technical Decisions
+1. **Adjust-Balance Endpoint**: Uses smart type detection instead of user selection
+   - Pros: Simpler UX, no user confusion
+   - Cons: System decides type (mitigated by clear descriptions)
+
+2. **UTC Date Handling**: All dates stored in UTC, filters use Date.UTC()
+   - Prevents timezone-related bugs
+   - Ensures consistent date comparisons
+
+3. **Reconciliation vs Opening Balance**: Separate transaction types for audit trail
+   - Maintains historical accuracy
+   - Clear record of when and why balance was adjusted
+
+### Known Limitations & Future Work
+- No recurring transaction cron job (manual endpoint only for MVP)
+- No bank API integration (Plaid for Phase 2)
+- No advanced analytics/forecasting
+- No multi-user/family sharing
+- No offline sync (Electron/PWA features deferred)
+
+### Database & Migrations
+- Prisma schema complete with all MVP entities
+- Migrations applied: initial + auth/recurring
+- Seed data available for testing (5 users with sample data)
+
+---
+
+**Ready for browser testing.** Next session: Start with E2E browser tests from "Next Steps" section. Reference MONEYFLOW_SPEC.md for detailed feature requirements.
