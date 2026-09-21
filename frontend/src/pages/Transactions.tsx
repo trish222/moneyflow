@@ -179,7 +179,7 @@ export default function Transactions() {
     try {
       setCSVLoading(true);
       setCSVError(null);
-      const response = await apiCall(`/accounts/${selectedAccount}/set-balance`, {
+      const response = await apiCall(`/accounts/${selectedAccount}/adjust-balance`, {
         method: "PUT",
         body: JSON.stringify({
           balance: parseFloat(balanceData.balance),
@@ -188,6 +188,8 @@ export default function Transactions() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        const txType = result.transactionType;
         setBalanceData({
           balance: "",
           date: new Date().toISOString().split("T")[0],
@@ -195,13 +197,16 @@ export default function Transactions() {
         setShowBalanceAdjust(false);
         fetchTransactions();
         fetchAccounts();
-        alert("Opening balance set successfully!");
+        const message = txType === "opening_balance"
+          ? "Opening balance set successfully!"
+          : "Balance adjustment recorded successfully!";
+        alert(message);
       } else {
         const result = await response.json();
-        setCSVError(result.message || "Failed to set balance");
+        setCSVError(result.message || "Failed to adjust balance");
       }
     } catch (error) {
-      setCSVError(error instanceof Error ? error.message : "Failed to set balance");
+      setCSVError(error instanceof Error ? error.message : "Failed to adjust balance");
     } finally {
       setCSVLoading(false);
     }
@@ -297,7 +302,7 @@ export default function Transactions() {
               onClick={() => setShowBalanceAdjust(!showBalanceAdjust)}
               className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition cursor-pointer"
             >
-              {showBalanceAdjust ? "Cancel" : "⚖️ Set Balance"}
+              {showBalanceAdjust ? "Cancel" : "⚖️ Adjust Balance"}
             </button>
           </div>
         </div>
@@ -447,13 +452,16 @@ export default function Transactions() {
           </form>
         )}
 
-        {/* Set Balance Form */}
+        {/* Adjust Balance Form */}
         {showBalanceAdjust && (
           <form
             onSubmit={handleSetBalance}
             className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
           >
-            <h2 className="text-xl font-bold text-white mb-4">Set Opening Balance</h2>
+            <h2 className="text-xl font-bold text-white mb-4">Adjust Balance</h2>
+            <p className="text-sm text-gray-400 mb-4">
+              Set an opening balance for a new account, or adjust an existing account balance if transactions are missing or incorrect.
+            </p>
 
             <div className="space-y-4">
               <div>
@@ -475,7 +483,7 @@ export default function Transactions() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Opening Balance
+                  Desired Balance
                 </label>
                 <input
                   type="number"
@@ -492,7 +500,7 @@ export default function Transactions() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Date
+                  Effective Date
                 </label>
                 <input
                   type="date"
@@ -517,7 +525,7 @@ export default function Transactions() {
               disabled={csvLoading}
               className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-800 text-white rounded-lg font-medium transition cursor-pointer"
             >
-              {csvLoading ? "Setting..." : "Set Opening Balance"}
+              {csvLoading ? "Adjusting..." : "Adjust Balance"}
             </button>
           </form>
         )}

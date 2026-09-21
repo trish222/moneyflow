@@ -635,6 +635,23 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
     }
 
     const balanceDate = date || new Date().toISOString().split("T")[0];
+    const balanceDateObj = new Date(balanceDate);
+
+    // Check for existing transactions before the opening balance date
+    const earlierTransactions = await prisma.transaction.findMany({
+      where: {
+        accountId,
+        date: { lt: balanceDateObj },
+      },
+      take: 1,
+    });
+
+    if (earlierTransactions.length > 0) {
+      return res.status(400).json({
+        error: "invalid_opening_balance_date",
+        message: `Cannot set opening balance to ${balanceDate}. There are existing transactions before this date. Use the "Adjust Balance" feature instead to correct a mid-stream balance.`,
+      });
+    }
 
     // Create opening balance transaction
     const openingTx = createOpeningBalanceTransaction(accountId, balanceNum, balanceDate);
@@ -667,6 +684,99 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
     res.status(500).json({
       error: "internal_error",
       message: "Failed to set account balance",
+    });
+  }
+});
+
+// PUT /api/accounts/:id/adjust-balance - Smart balance adjustment
+// Auto-detects: opening_balance (if first transaction) or reconciliation (if correcting)
+app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId || DEFAULT_USER_ID;
+    const idParam = typeof req.params.id === "string" ? req.params.id : "";
+    const accountId = idParam ? parseInt(idParam) : 0;
+    const { balance, date } = req.body;
+
+    if (balance === undefined || balance === null) {
+      return res.status(400).json({
+        error: "missing_fields",
+        message: "Balance is required",
+      });
+    }
+
+    // Verify account belongs to user
+    const account = await prisma.account.findUnique({
+      where: { id: accountId },
+    });
+
+    if (!account || account.userId !== userId) {
+      return res.status(403).json({
+        error: "forbidden",
+        message: "Cannot access this account",
+      });
+    }
+
+    const newBalance = parseFloat(balance);
+    if (isNaN(newBalance)) {
+      return res.status(400).json({
+        error: "invalid_balance",
+        message: "Balance must be a valid number",
+      });
+    }
+
+    const adjustDate = date || new Date().toISOString().split("T")[0];
+
+    // Check if this account has any transactions
+    const existingTransactions = await prisma.transaction.findMany({
+      where: { accountId },
+      take: 1,
+    });
+
+    const isFirstTransaction = existingTransactions.length === 0;
+
+    // Determine transaction type
+    const txType = isFirstTransaction ? "opening_balance" : "reconciliation";
+    const description = isFirstTransaction
+      ? "Opening Balance"
+      : "Balance Adjustment (Reconciliation)";
+
+    // For reconciliation, calculate the adjustment amount
+    // For opening balance, the amount IS the new balance
+    const txAmount = isFirstTransaction
+      ? newBalance
+      : (newBalance - account.balance);
+
+    // Create adjustment transaction
+    await prisma.transaction.create({
+      data: {
+        userId,
+        accountId,
+        amount: Math.abs(txAmount),
+        type: txAmount >= 0 ? "income" : "expense",
+        category: txType,
+        description,
+        date: new Date(adjustDate),
+      },
+    });
+
+    // Update account balance
+    const updatedAccount = await prisma.account.update({
+      where: { id: accountId },
+      data: { balance: newBalance },
+    });
+
+    res.json({
+      message: isFirstTransaction
+        ? "Opening balance set successfully"
+        : "Balance adjusted successfully",
+      transactionType: txType,
+      account: updatedAccount,
+    });
+  } catch (error) {
+    console.error("Adjust balance error:", error);
+    res.status(500).json({
+      error: "internal_error",
+      message: "Failed to adjust account balance",
     });
   }
 });
