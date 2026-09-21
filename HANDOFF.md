@@ -312,7 +312,7 @@ Define complete technical specification and implementation roadmap for MoneyFlow
   - Ensures future developers follow exact same styling approach
 - [x] No TypeScript errors after changes ✅
 
-**Part 6 - Comprehensive API Testing & Bug Fixes (September 21):**
+**Part 6 - Comprehensive API Testing & Critical Bug Fix (September 21, first half):**
 - [x] Conducted full API endpoint testing:
   - [x] Authentication: register, login, protected endpoints with JWT verification
   - [x] Accounts: create, list, set opening balance
@@ -330,6 +330,37 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - [x] Verified data flow: register → create account → import CSV → verify transactions
 - [x] All backend API endpoints functional and tested
 - [x] TypeScript compilation successful after fix
+
+**Part 7 - Smart Balance Adjustment with Data Integrity (September 21, second half):**
+- [x] Identified data integrity issue: opening balance date must be before existing transactions
+  - User question led to discovery: "What if opening balance date is after existing transactions?"
+  - Problem: Creates logical inconsistency (transactions before balance was set)
+- [x] Implemented validation for set-balance endpoint:
+  - Checks if transactions exist before the opening balance date
+  - Rejects with clear error: "Cannot set opening balance to [date]. There are existing transactions before this date."
+  - Directs users to use "Adjust Balance" feature instead
+- [x] Created new smart adjust-balance endpoint (PUT /api/accounts/:id/adjust-balance):
+  - **Auto-detects transaction type**:
+    - If first transaction ever → creates as type: "opening_balance"
+    - If existing transactions → creates as type: "reconciliation"
+  - Calculates adjustment amount automatically (newBalance - currentBalance)
+  - Maintains invariant: sum-of-transactions always equals account-balance
+  - User never sees type selection, system determines automatically
+- [x] Thoroughly tested both features:
+  - ✅ Validation test: Opening balance after existing transaction → REJECTED
+  - ✅ Smart detect test 1: First adjust-balance → creates "opening_balance"
+  - ✅ Smart detect test 2: Mid-stream adjust-balance → creates "reconciliation"
+  - All tests passing with correct transaction amounts and descriptions
+- [x] Updated frontend Transactions page:
+  - Replaced separate "Set Opening Balance" form with unified "Adjust Balance" button
+  - Improved form labels: "Desired Balance" and "Effective Date"
+  - Added descriptive help text explaining both use cases
+  - Updated success messages to reflect transaction type
+  - Button text changed from "Set Balance" to "Adjust Balance"
+  - Endpoint changed from /set-balance to /adjust-balance
+- [x] Commit 447c783: "feat: smart balance adjustment with data integrity validation"
+- [x] Both backend and frontend TypeScript build successful
+- [x] Backward compatibility maintained: set-balance still works for opening balances only
 
 ### 💡 Key Features Added (September 20)
 
@@ -450,17 +481,20 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 ### 💡 Key Context for Next Session
 
 **Current State (September 21 Session End):**
-- Branch: glassy-in, last commit a6bd71e (fix: budget spent calculation using UTC date filtering)
+- Branch: glassy-in, last commit 447c783 (feat: smart balance adjustment with data integrity validation)
 - Both backend and frontend dev servers running and tested
-- **CRITICAL BUG FIXED**: Budget spent calculation now works correctly (was using local time instead of UTC)
+- **CRITICAL BUG FIXED**: Budget spent calculation now works correctly (UTC date filtering)
+- **NEW FEATURE**: Smart balance adjustment with auto-detected transaction types
+- **DATA INTEGRITY**: Opening balance validation prevents inconsistent data states
 - All TypeScript errors resolved, builds successful
 - Registration/login endpoints verified working with JWT tokens
-- Budget spent calculation from transactions **NOW WORKING** (50% spent for $150/$300 budget)
-- All 6 main API endpoints (accounts, transactions, investments, debts, savings goals, budgets) implemented and tested
+- Budget spent calculation from transactions **WORKING** (50% spent for $150/$300 budget) ✅
+- All 6 main API endpoints (accounts, transactions, investments, debts, savings goals, budgets) fully functional
 - Dashboard metrics endpoint implemented and returns correct structure
 - CSV import endpoint tested and working (5 transactions imported successfully)
-- Opening balance endpoint tested and working (creates audit trail transaction)
-- Frontend Transactions page has CSV import and balance adjustment forms
+- Opening balance endpoint with validation (rejects dates after existing transactions)
+- New adjust-balance endpoint with auto-type-detection (opening_balance vs reconciliation)
+- Frontend Transactions page completely refactored with unified "Adjust Balance" UX
 
 **What's Ready to Test (All Backend Tests Passed ✅):**
 1. Full registration → login → dashboard flow in browser
