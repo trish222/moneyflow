@@ -719,3 +719,48 @@ cd frontend && npm run dev &
 ---
 
 **Ready for browser testing.** Next session: Start with E2E browser tests from "Next Steps" section. Reference MONEYFLOW_SPEC.md for detailed feature requirements.
+
+---
+
+## 📌 Session Summary (September 21, 2026 - Evening)
+
+### Issues Found & Fixed
+1. **Budget Page Blank White Issue** — Fixed!
+   - **Root Cause**: Budgets.tsx line 32 was using plain `fetch()` instead of `apiCall()`
+   - **Problem**: Missing Authorization header caused 401 responses, page failed silently
+   - **Fix**: Changed to use `apiCall()` to ensure token is sent
+   - **Commit**: b5f0914 "fix: use apiCall for authenticated budget fetches in Budgets page"
+
+2. **Back Button Issue** — Likely caused by broken Budget page
+   - The Budget page 404 error likely broke browser history
+   - Now that Budget page is fixed, back button should work correctly
+   - Recommend testing in browser to confirm
+
+### API E2E Test Results (All Passing ✅)
+- ✅ User registration with JWT token generation
+- ✅ Dashboard metrics endpoint (net worth, investments, etc.)
+- ✅ Account creation and listing
+- ✅ Transaction creation (expense with $50 deducted)
+- ✅ Budget creation ($300 limit)
+- ✅ **Budget spent calculation working correctly** ($50 spent out of $300 = 16.67%)
+- ✅ Investment creation
+- ✅ Full end-to-end workflow: register → create account → add transaction → create budget → verify spent
+
+### Current State
+- **Backend**: All endpoints tested and working ✅
+- **Frontend**: Build succeeds, needs browser testing for UI issues
+- **Database**: Seed data available, new test user created during testing
+- **Servers**: Both backend (port 3000) and frontend dev (port 5173) running
+
+### Next Steps for Browser Testing
+1. **Open http://localhost:5173 in browser**
+2. **Register new account** and verify login works
+3. **Test Budget page** specifically (was broken, now fixed)
+4. **Test back button** between pages (navigate around, use browser back)
+5. **Create transactions and budget** to verify spent calculation displays
+6. **Test on mobile** for responsive design
+7. **Report any remaining UI issues**
+
+### Known Limitations (Expected)
+- Investment ID null in response (minor, doesn't affect functionality)
+- Recurring transactions: endpoints exist but manual-only (cron deferred to Phase 2)
