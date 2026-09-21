@@ -787,9 +787,64 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 }
 ```
 
+**Responsive Implementation (Updated September 21)**:
+```css
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.5fr;  /* Responsive proportions */
+  gap: 1.5rem;
+  height: screen;  /* Fills viewport */
+  overflow-y: auto;  /* Vertical scroll only */
+}
+
+.metrics-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;  /* Good breathing room */
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;  /* Maintained spacing */
+}
+
+@media (max-width: 1280px) {
+  .dashboard-layout {
+    grid-template-columns: 0.8fr 1fr;  /* Slightly adjusted */
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;  /* Stack vertically */
+  }
+  .metrics-column {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);  /* 4-column metric cards */
+    gap: 0.8rem;
+  }
+  .cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .metrics-column {
+    grid-template-columns: repeat(2, 1fr);  /* 2-column on mobile */
+  }
+  .cards-grid {
+    grid-template-columns: 1fr;  /* Single column */
+  }
+}
+```
+
 **Responsive Behavior**:
-- Mobile (< 1024px): Single column layout, cards stack vertically
-- Desktop (≥ 1024px): 2-column layout with left sidebar and right grid
+- **Desktop (≥1280px)**: 2-column layout (metrics left 0.85fr, cards right 1.5fr) - fills screen with proper spacing
+- **Tablet (1024-1280px)**: Same layout with slightly reduced grid proportions
+- **Tablet landscape (768-1024px)**: Metrics become 4-column grid, cards stay 2-column - all content visible
+- **Mobile (<768px)**: Metrics 2-column, cards single column - optimized for small screens
+- **All screens**: Vertical scrolling only, never horizontal - content scales to fill width
 
 ---
 
