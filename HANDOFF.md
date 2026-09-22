@@ -869,3 +869,108 @@ cd frontend && npm run dev &
 - All changes made on main branch
 - No commits created (per user request)
 - Files ready to review before committing
+
+---
+
+## 📌 Session Update (September 22, 2026 - Manage Transactions Features)
+
+### What Was Implemented (Commit 096b26c)
+
+**Phase 1: Frontend - Income/Expense Multi-Select Filtering** ✅
+- Replaced single-select toggle with multi-select checkboxes
+- Users can now view both Income AND Expenses simultaneously
+- Chart title dynamically updates: "Income & Expenses", "Expenses", "Income", or "No Data"
+- Transaction log filters to show only selected types
+- Chart only shows data for selected transaction types
+- Prevents layout shift when toggling (no hidden elements)
+
+**Phase 2: Database - Subcategories & Categories** ✅
+- Added `subcategory` optional field to Transaction model
+- Added `subcategory` optional field to Budget model
+- Created Category table (id, userId, name, icon, color) with unique constraint on (userId, name)
+- Created Subcategory table (id, categoryId, name, icon) with unique constraint on (categoryId, name)
+- Migration applied successfully: 20260922050009_add_subcategories_and_categories
+- Seeded 7 default categories with 3 subcategories each:
+  - Food: Groceries, Dining Out, Coffee
+  - Utilities: Electricity, Water, Internet
+  - Entertainment: Movies, Games, Music
+  - Transportation: Gas, Public Transit, Parking
+  - Salary: Base Salary, Bonus
+  - Business: Freelance, Side Income
+  - Other: Miscellaneous
+
+**Phase 3: Backend - Category CRUD API** ✅
+- Implemented 8 new API endpoints (all require authentication)
+- Category endpoints:
+  - GET /api/categories - includes subcategories in response
+  - POST /api/categories - creates category with optional subcategories
+  - PUT /api/categories/:id - updates name, icon, color
+  - DELETE /api/categories/:id - cascades to subcategories
+- Subcategory endpoints:
+  - GET /api/categories/:id/subcategories - lists all subcategories
+  - POST /api/categories/:id/subcategories - adds subcategory to category
+  - PUT /api/subcategories/:id - updates subcategory name, icon
+  - DELETE /api/subcategories/:id - removes subcategory
+- Proper error handling: 404 for not found, 400 for duplicate names, 500 for server errors
+- All endpoints verify userId ownership (data isolation)
+
+**Phase 4: Frontend - Subcategory Display in Transaction Log** ✅
+- Updated Transaction interface to include subcategory field
+- Added optional subcategory input field to "Add Transaction" form
+- Form grid responsive: 1 column (mobile) → 2 columns (tablet) → 3 columns (desktop)
+- Subcategory field clears when category selection changes (UX improvement)
+- Transaction table now displays subcategory column:
+  - Shows subcategory name if provided
+  - Shows "-" if subcategory is empty
+  - Styled in gray for visual distinction from category
+
+### Build Status
+- ✅ Frontend builds successfully (no TypeScript errors)
+- ✅ Backend builds successfully (no TypeScript errors)
+- ✅ Prisma migration applied without errors
+- ✅ Database seeded with default categories and subcategories
+
+### What's Next (For Next Session - Phase 4 & Beyond)
+
+**Priority 1: Category Settings Page (Frontend)**
+- [ ] Create CategorySettings.tsx page
+- [ ] Display list of user's categories with edit/delete buttons
+- [ ] Add new category form
+- [ ] Manage subcategories per category (add/edit/delete)
+- [ ] Link from Transactions page "Manage Categories" button
+- [ ] Test CRUD operations on categories and subcategories
+
+**Priority 2: Update Transaction Form to Use Categories API**
+- [ ] Fetch categories from /api/categories endpoint on page load
+- [ ] Replace hardcoded categories array with dynamic categories
+- [ ] Populate subcategory dropdown based on selected category
+- [ ] Make category selection required (pick from user's categories)
+- [ ] Make subcategory optional but populated from category's subcategories
+
+**Priority 3: Update Budget Page**
+- [ ] Add subcategory support to Budget form (optional)
+- [ ] Update Budget CRUD to include subcategory field
+- [ ] Filter transactions by both category AND subcategory when calculating spent
+
+**Priority 4: Browser Testing**
+- [ ] Test multi-select income/expense checkboxes with real data
+- [ ] Verify chart updates when toggling between Income, Expenses, Both
+- [ ] Test transaction form with subcategory input
+- [ ] Verify subcategory displays in transaction log
+- [ ] Test category management CRUD operations
+- [ ] Test on mobile for responsive layout
+
+**Priority 5: Recurring Transactions Integration**
+- [ ] Update RecurringTransaction to include subcategory field
+- [ ] Update recurring transaction form to support subcategories
+
+### Known Limitations
+- CategorySettings page not yet built (category management only via API)
+- Transaction form still uses hardcoded categories (not dynamic from API)
+- Budgets don't support subcategory filtering yet
+
+### Technical Notes
+- Used `String(req.params.id)` pattern for type safety in Express routes
+- Set unique constraints on (userId, name) for categories and (categoryId, name) for subcategories
+- All category operations verify userId ownership for security
+- Subcategory is optional field in Transaction/Budget (null by default)
