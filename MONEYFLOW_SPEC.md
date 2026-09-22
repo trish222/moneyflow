@@ -90,6 +90,7 @@ model User {
   transactions    Transaction[]
   budgets         Budget[]
   recurringTxs    RecurringTransaction[]
+  categories      Category[]  // User's custom categories
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -126,7 +127,8 @@ model Transaction {
   
   amount          Float     // Always positive; type determines sign
   type            String    // "income" | "expense" | "opening_balance" | "reconciliation"
-  category        String    // "salary", "food", "transport", "other", "reconciliation", etc.
+  category        String    // User's custom categories (e.g., "Food", "Utilities", etc.)
+  subcategory     String?   // Optional subcategory (e.g., "Groceries", "Dining Out")
   description     String?   // User-provided or auto-generated
   date            DateTime  // Stored in UTC
   
@@ -179,21 +181,57 @@ model RecurringTransaction {
 
 // NEW: Budget (for future implementation)
 model Budget {
-  id        Int       @id @default(autoincrement())
-  userId    Int
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            Int       @id @default(autoincrement())
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  category  String
-  limit     Float
-  spent     Float     @default(0)
-  month     Int       // 1-12
-  year      Int       // YYYY
+  category      String    // User's custom category
+  subcategory   String?   // Optional subcategory for category-specific budgets
+  limit         Float
+  spent         Float     @default(0)
+  month         Int       // 1-12
+  year          Int       // YYYY
   
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   
-  @@unique([userId, category, month, year])
+  @@unique([userId, category, subcategory, month, year])
   @@index([userId, month, year])
+}
+
+// NEW: User-defined Categories with Subcategories
+model Category {
+  id              Int             @id @default(autoincrement())
+  userId          Int
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name            String          // "Food", "Utilities", etc.
+  icon            String?         // Optional emoji icon (🍔, 💡, etc.)
+  color           String?         // Optional hex color for UI
+  
+  subcategories   Subcategory[]   // Nested subcategories
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([userId])
+  @@unique([userId, name])  // User can't have duplicate category names
+}
+
+// NEW: Subcategories within Categories
+model Subcategory {
+  id              Int       @id @default(autoincrement())
+  categoryId      Int
+  category        Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  name            String    // "Groceries", "Dining Out", etc.
+  icon            String?   // Optional emoji icon
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([categoryId])
+  @@unique([categoryId, name])  // Category can't have duplicate subcategory names
 }
 
 // Keep existing Investment models as-is for Phase 2
@@ -481,6 +519,7 @@ GET /transactions?accountId=1&startDate=2026-09-01&endDate=2026-09-30&category=f
       "amount": 45.99,
       "type": "expense",
       "category": "food",
+      "subcategory": "groceries",
       "description": "Grocery store",
       "date": "2026-09-19T15:30:00Z",
       "recurringTransactionId": null,
@@ -503,6 +542,7 @@ Create a transaction.
   "amount": 45.99,
   "type": "expense",
   "category": "food",
+  "subcategory": "groceries",
   "description": "Grocery store",
   "date": "2026-09-19"
 }
@@ -922,11 +962,108 @@ The dashboard includes both metric cards and clickable navigation cards:
 
 **Result:** Significantly reduced whitespace while maintaining professional appearance and layout stability.
 
+### 4.7 Category Management Endpoints (MVP - September 22, 2026)
+
+#### GET /api/categories
+List all user categories with subcategories.
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Food",
+      "icon": "🍔",
+      "color": null,
+      "subcategories": [
+        { "id": 1, "name": "Groceries", "icon": null },
+        { "id": 2, "name": "Dining Out", "icon": null }
+      ]
+    }
+  ]
+}
+```
+
+#### POST /api/categories
+Create new category with optional subcategories.
+
+**Request Body:**
+```json
+{
+  "name": "Shopping",
+  "icon": "🛍️",
+  "color": "#ff6b6b",
+  "subcategories": ["Clothes", "Electronics"]
+}
+```
+
+**Response (201):** Returns created category with subcategories.
+
+#### PUT /api/categories/:id
+Update category (name, icon, color).
+
+**Request Body:**
+```json
+{
+  "name": "Updated Name",
+  "icon": "🆕",
+  "color": "#00ff88"
+}
+```
+
+#### DELETE /api/categories/:id
+Delete category and cascade to subcategories.
+
+**Response (200):** `{"message": "Category deleted"}`
+
+#### GET /api/categories/:id/subcategories
+List subcategories for a category.
+
+#### POST /api/categories/:id/subcategories
+Add subcategory to category.
+
+**Request Body:**
+```json
+{
+  "name": "New Subcategory",
+  "icon": "✨"
+}
+```
+
+#### PUT /api/subcategories/:id
+Update subcategory.
+
+**Request Body:**
+```json
+{
+  "name": "Updated Name",
+  "icon": "🔄"
+}
+```
+
+#### DELETE /api/subcategories/:id
+Delete subcategory.
+
+**Response (200):** `{"message": "Subcategory deleted"}`
+
+**Default Categories (Created on Registration):**
+When a new user registers, 7 default categories are automatically created:
+- Food (Groceries, Dining Out, Coffee)
+- Utilities (Electricity, Water, Internet)
+- Entertainment (Movies, Games, Music)
+- Transportation (Gas, Public Transit, Parking)
+- Salary (Base Salary, Bonus)
+- Business (Freelance, Side Income)
+- Other (Miscellaneous)
+
+Users can customize, add, or delete categories at any time via CategorySettings page.
+
 ---
 
 ## 5. Frontend Implementation
 
-### 5.1 Component Structure (MVP)
+### 5.1 Component Structure (MVP + September 22 Enhancements)
 
 ```
 App.tsx (Router, Auth Context)
@@ -936,12 +1073,19 @@ App.tsx (Router, Auth Context)
 │   ├── Login.tsx (email/password form)
 │   ├── Register.tsx (signup form)
 │   ├── Dashboard.tsx (metrics + recent activity)
-│   ├── Transactions.tsx (CRUD list + form)
-│   └── Accounts.tsx (select/switch account)
+│   ├── Transactions.tsx (CRUD list + form + category management)
+│   ├── CategorySettings.tsx (category/subcategory CRUD)
+│   ├── Budgets.tsx (budget tracking)
+│   ├── Investments.tsx (portfolio management)
+│   ├── Debt.tsx (debt tracking)
+│   ├── Savings.tsx (savings goals)
+│   ├── Reports.tsx (analytics + charts)
+│   └── Accounts.tsx (account management)
 └── Components/
-    ├── GlowCard.tsx (styled container)
-    ├── TransactionForm.tsx (reusable form)
-    ├── TransactionList.tsx (table/list)
+    ├── GlowCard.tsx (styled container with glow effects)
+    ├── TransactionForm.tsx (dynamic category/subcategory selectors)
+    ├── TransactionList.tsx (table with subcategory column)
+    ├── CategoryCard.tsx (expandable category management)
     └── LoadingSpinner.tsx (simple loader)
 ```
 
@@ -2228,8 +2372,87 @@ SENTRY_DSN="https://..."
 
 ---
 
+## Appendix D: September 22, 2026 Enhancements - User-Controlled Categories
+
+### D.1 Overview
+
+This specification was enhanced on September 22, 2026 to add comprehensive category management features, allowing users full control over transaction categories and subcategories.
+
+### D.2 New Features
+
+**1. Multi-Select Income/Expense Filtering**
+- Users can now toggle both Income AND Expenses simultaneously
+- Chart displays combined data when both selected
+- Transaction log filters by selected types only
+- No layout shift when toggling filters
+
+**2. Subcategories in Transaction Model**
+- New optional `subcategory` field in Transaction model
+- New optional `subcategory` field in Budget model
+- Transaction log displays category AND subcategory in table
+- Transaction form has subcategory dropdown (populated from selected category)
+
+**3. User-Defined Categories**
+- Category table allows users to create custom categories
+- Each category can have 2+ subcategories
+- Users can edit category name, icon, color
+- Users can delete categories (cascades to subcategories)
+- Users can manage subcategories independently
+
+**4. Category Management Interface**
+- New CategorySettings page (/categories route)
+- Expandable category cards showing all subcategories
+- Add, edit, delete operations for categories and subcategories
+- "Manage Categories" button on Transactions page
+
+**5. Dynamic Category Dropdowns**
+- Transaction form fetches categories from API (no hardcoded list)
+- Category dropdown shows user's custom categories + icons
+- Subcategory dropdown dynamically populates based on category
+- Clears subcategory when category selection changes
+
+**6. Default Categories on Registration**
+- New users automatically receive 7 default categories
+- Each with 2-3 pre-configured subcategories
+- Helps users get started without manual setup
+- Users can customize/delete defaults anytime
+
+### D.3 Implementation Details
+
+**New Database Models:**
+- `Category(id, userId, name, icon, color, createdAt, updatedAt)`
+- `Subcategory(id, categoryId, name, icon, createdAt, updatedAt)`
+
+**New API Endpoints (8 total):**
+- GET /api/categories
+- POST /api/categories
+- PUT /api/categories/:id
+- DELETE /api/categories/:id
+- GET /api/categories/:id/subcategories
+- POST /api/categories/:id/subcategories
+- PUT /api/subcategories/:id
+- DELETE /api/subcategories/:id
+
+**Frontend Pages:**
+- CategorySettings.tsx: Full CRUD UI for categories/subcategories
+- Updated Transactions.tsx: Multi-select filters + dynamic categories
+
+**Registration Enhancement:**
+- POST /api/auth/register now creates 7 default categories
+- Creates categories with all subcategories atomically
+
+### D.4 User Experience Flow
+
+1. **User Registration:** Creates account → 7 default categories created automatically
+2. **First Transaction:** Go to Transactions → select from default categories → pick subcategory
+3. **Customize Categories:** Click "Manage Categories" → edit/add/delete categories and subcategories
+4. **View by Type:** Check Income/Expense boxes → chart and log update
+5. **Track Spending:** Transaction log shows category and subcategory for full context
+
+---
+
 **End of Specification**
 
-**Ready for development.** A solo developer can implement this MVP in 1-2 weeks, focusing on Days 1-3 for core features and Days 4-7 for testing and deployment.
+**Ready for development.** Initial MVP implemented September 19-21, 2026. Category management enhancements added September 22, 2026.
 
-Generated: September 19, 2026
+Updated: September 22, 2026
