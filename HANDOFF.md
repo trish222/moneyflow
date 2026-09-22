@@ -391,6 +391,24 @@ Define complete technical specification and implementation roadmap for MoneyFlow
 - [ ] Test budget page: create budget, verify spent calculation displays
 
 **Priority 2: Remaining Features**
+- [ ] **Transactions Tab - Income/Expense Filter** — Make checkboxes instead of toggle
+  - [ ] Change from single-select (either income OR expense) to multi-select (both at once)
+  - [ ] Update chart to show both income and expense when both checked
+  - [ ] Update transaction log to filter by both selected types
+  - [ ] Ensure no layout shift when toggling checkboxes
+- [ ] **Subcategories** — Add subcategory support to categories
+  - [ ] Update Transaction schema to include optional `subcategory` field
+  - [ ] Update Budget schema to support subcategory limits
+  - [ ] Update frontend Transaction form to show subcategory dropdown (populated from selected category)
+  - [ ] Update Reports/Charts to group by category/subcategory
+- [ ] **User-Editable Categories & Subcategories**
+  - [ ] Create Category table in database (name, icon, color, userId)
+  - [ ] Create CategorySettings page (list, add, edit, delete categories)
+  - [ ] Add "Manage Categories" button/link on Transactions page
+  - [ ] Allow user to create custom categories and rename defaults
+  - [ ] Allow user to add/remove subcategories per category
+  - [ ] Update Transaction form to use user's custom categories
+  - [ ] Migrate seed data to use default categories
 - [ ] Recurring transactions: Manual endpoint implementation (POST /recurring/:id/create-once)
 - [ ] Recurring transaction UI on Transactions page
 - [ ] Dashboard upcoming bills widget

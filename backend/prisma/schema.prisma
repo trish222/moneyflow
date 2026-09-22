@@ -23,6 +23,7 @@ model User {
   savingsGoals        SavingsGoal[]
   budgets             Budget[]
   recurringTxs        RecurringTransaction[]
+  categories          Category[]
 
   @@index([email])
 }
@@ -55,6 +56,7 @@ model Transaction {
   amount                  Float                   // Always positive; type determines sign
   type                    String                  // "income" | "expense"
   category                String
+  subcategory             String?                 // Optional subcategory under main category
   description             String?
   date                    DateTime
 
@@ -158,16 +160,50 @@ model RecurringTransaction {
 }
 
 model Budget {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category  String
-  limit     Float
-  spent     Float    @default(0)
-  month     Int
-  year      Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category      String
+  subcategory   String?  // Optional subcategory for category-specific budgets
+  limit         Float
+  spent         Float    @default(0)
+  month         Int
+  year          Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([userId, month, year])
+}
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  userId        Int
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String        // "Food", "Utilities", etc.
+  icon          String?       // Optional emoji or icon name
+  color         String?       // Optional color hex code
+
+  subcategories Subcategory[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([userId])
+  @@unique([userId, name])  // User can't have duplicate category names
+}
+
+model Subcategory {
+  id            Int       @id @default(autoincrement())
+  categoryId    Int
+  category      Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  name          String    // "Groceries", "Dining Out", etc.
+  icon          String?   // Optional emoji or icon name
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@unique([categoryId, name])  // Category can't have duplicate subcategory names
 }

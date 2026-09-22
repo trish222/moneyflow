@@ -101,6 +101,31 @@ async function seed() {
          VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW()) ON CONFLICT DO NOTHING`, [DEFAULT_USER_ID, budget.category, budget.limit, 0, currentMonth, currentYear]);
         }
         console.log("Budgets added");
+        // Add default categories with subcategories
+        const categories = [
+            { name: "Food", icon: "🍔", subcategories: ["Groceries", "Dining Out", "Coffee"] },
+            { name: "Utilities", icon: "💡", subcategories: ["Electricity", "Water", "Internet"] },
+            { name: "Entertainment", icon: "🎬", subcategories: ["Movies", "Games", "Music"] },
+            { name: "Transportation", icon: "🚗", subcategories: ["Gas", "Public Transit", "Parking"] },
+            { name: "Salary", icon: "💰", subcategories: ["Base Salary", "Bonus"] },
+            { name: "Business", icon: "💼", subcategories: ["Freelance", "Side Income"] },
+            { name: "Other", icon: "📦", subcategories: ["Miscellaneous"] },
+        ];
+        for (const cat of categories) {
+            const categoryResult = await pool.query(`INSERT INTO "Category" ("userId", name, icon, "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, NOW(), NOW())
+         ON CONFLICT ("userId", name) DO UPDATE SET "updatedAt" = NOW()
+         RETURNING id`, [DEFAULT_USER_ID, cat.name, cat.icon]);
+            if (categoryResult.rows.length > 0) {
+                const categoryId = categoryResult.rows[0].id;
+                for (const subcat of cat.subcategories) {
+                    await pool.query(`INSERT INTO "Subcategory" ("categoryId", name, "createdAt", "updatedAt")
+             VALUES ($1, $2, NOW(), NOW())
+             ON CONFLICT ("categoryId", name) DO NOTHING`, [categoryId, subcat]);
+                }
+            }
+        }
+        console.log("Categories and subcategories added");
         console.log("Database seed completed successfully!");
     }
     catch (error) {

@@ -1090,6 +1090,244 @@ app.post("/api/budgets", authMiddleware, async (req, res) => {
         });
     }
 });
+// Categories API
+app.get("/api/categories", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const categories = await prisma.category.findMany({
+            where: { userId },
+            include: { subcategories: true },
+            orderBy: { name: "asc" },
+        });
+        res.json(categories);
+    }
+    catch (error) {
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to fetch categories",
+        });
+    }
+});
+app.post("/api/categories", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const { name, icon, color, subcategories } = req.body;
+        if (!name) {
+            return res.status(400).json({
+                error: "missing_fields",
+                message: "Category name is required",
+            });
+        }
+        const category = await prisma.category.create({
+            data: {
+                userId,
+                name,
+                icon: icon || null,
+                color: color || null,
+                subcategories: {
+                    create: (subcategories || []).map((sub) => ({ name: sub })),
+                },
+            },
+            include: { subcategories: true },
+        });
+        res.status(201).json(category);
+    }
+    catch (error) {
+        if (error.code === "P2002") {
+            return res.status(400).json({
+                error: "duplicate_category",
+                message: "Category with this name already exists",
+            });
+        }
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to create category",
+        });
+    }
+});
+app.put("/api/categories/:id", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const id = String(req.params.id);
+        const { name, icon, color } = req.body;
+        const category = await prisma.category.findFirst({
+            where: { id: parseInt(id), userId },
+        });
+        if (!category) {
+            return res.status(404).json({
+                error: "not_found",
+                message: "Category not found",
+            });
+        }
+        const updated = await prisma.category.update({
+            where: { id: parseInt(id) },
+            data: {
+                name: name || category.name,
+                icon: icon !== undefined ? icon : category.icon,
+                color: color !== undefined ? color : category.color,
+            },
+            include: { subcategories: true },
+        });
+        res.json(updated);
+    }
+    catch (error) {
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to update category",
+        });
+    }
+});
+app.delete("/api/categories/:id", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const id = String(req.params.id);
+        const category = await prisma.category.findFirst({
+            where: { id: parseInt(id), userId },
+        });
+        if (!category) {
+            return res.status(404).json({
+                error: "not_found",
+                message: "Category not found",
+            });
+        }
+        await prisma.category.delete({
+            where: { id: parseInt(id) },
+        });
+        res.json({ message: "Category deleted" });
+    }
+    catch (error) {
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to delete category",
+        });
+    }
+});
+// Subcategories API
+app.get("/api/categories/:id/subcategories", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const id = String(req.params.id);
+        const category = await prisma.category.findFirst({
+            where: { id: parseInt(id), userId },
+        });
+        if (!category) {
+            return res.status(404).json({
+                error: "not_found",
+                message: "Category not found",
+            });
+        }
+        const subcategories = await prisma.subcategory.findMany({
+            where: { categoryId: parseInt(id) },
+            orderBy: { name: "asc" },
+        });
+        res.json(subcategories);
+    }
+    catch (error) {
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to fetch subcategories",
+        });
+    }
+});
+app.post("/api/categories/:id/subcategories", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const id = String(req.params.id);
+        const { name, icon } = req.body;
+        if (!name) {
+            return res.status(400).json({
+                error: "missing_fields",
+                message: "Subcategory name is required",
+            });
+        }
+        const category = await prisma.category.findFirst({
+            where: { id: parseInt(id), userId },
+        });
+        if (!category) {
+            return res.status(404).json({
+                error: "not_found",
+                message: "Category not found",
+            });
+        }
+        const subcategory = await prisma.subcategory.create({
+            data: {
+                categoryId: parseInt(id),
+                name,
+                icon: icon || null,
+            },
+        });
+        res.status(201).json(subcategory);
+    }
+    catch (error) {
+        if (error.code === "P2002") {
+            return res.status(400).json({
+                error: "duplicate_subcategory",
+                message: "Subcategory with this name already exists in this category",
+            });
+        }
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to create subcategory",
+        });
+    }
+});
+app.put("/api/subcategories/:id", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const id = String(req.params.id);
+        const { name, icon } = req.body;
+        const subcategory = await prisma.subcategory.findUnique({
+            where: { id: parseInt(id) },
+            include: { category: true },
+        });
+        if (!subcategory || subcategory.category.userId !== userId) {
+            return res.status(404).json({
+                error: "not_found",
+                message: "Subcategory not found",
+            });
+        }
+        const updated = await prisma.subcategory.update({
+            where: { id: parseInt(id) },
+            data: {
+                name: name || subcategory.name,
+                icon: icon !== undefined ? icon : subcategory.icon,
+            },
+        });
+        res.json(updated);
+    }
+    catch (error) {
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to update subcategory",
+        });
+    }
+});
+app.delete("/api/subcategories/:id", authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId || DEFAULT_USER_ID;
+        const id = String(req.params.id);
+        const subcategory = await prisma.subcategory.findUnique({
+            where: { id: parseInt(id) },
+            include: { category: true },
+        });
+        if (!subcategory || subcategory.category.userId !== userId) {
+            return res.status(404).json({
+                error: "not_found",
+                message: "Subcategory not found",
+            });
+        }
+        await prisma.subcategory.delete({
+            where: { id: parseInt(id) },
+        });
+        res.json({ message: "Subcategory deleted" });
+    }
+    catch (error) {
+        res.status(500).json({
+            error: "internal_error",
+            message: "Failed to delete subcategory",
+        });
+    }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`MoneyFlow API listening on port ${PORT}`);

@@ -7,6 +7,7 @@ interface Transaction {
   amount?: number;
   type?: string;
   category?: string;
+  subcategory?: string;
   date?: string;
 }
 
@@ -28,7 +29,7 @@ export default function Transactions() {
   const [showForm, setShowForm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [showBalanceAdjust, setShowBalanceAdjust] = useState(false);
-  const [breakdownType, setBreakdownType] = useState<"expense" | "income">("expense");
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(["expense"]));
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [csvFile, setCSVFile] = useState<File | null>(null);
@@ -42,6 +43,7 @@ export default function Transactions() {
     amount: "",
     type: "expense",
     category: "food",
+    subcategory: "",
     date: new Date().toISOString().split("T")[0],
   });
 
@@ -54,7 +56,7 @@ export default function Transactions() {
 
   useEffect(() => {
     calculateCategoryBreakdown();
-  }, [transactions, breakdownType]);
+  }, [transactions, selectedTypes]);
 
   const fetchAccounts = async () => {
     try {
@@ -71,7 +73,7 @@ export default function Transactions() {
     const breakdown: { [key: string]: number } = {};
 
     transactions.forEach((t) => {
-      if (t.type === breakdownType) {
+      if (selectedTypes.has(t.type || "")) {
         const category = t.category || "Other";
         breakdown[category] = (breakdown[category] || 0) + (t.amount || 0);
       }
@@ -112,6 +114,7 @@ export default function Transactions() {
           amount: "",
           type: "expense",
           category: "food",
+          subcategory: "",
           date: new Date().toISOString().split("T")[0],
         });
         setShowForm(false);
@@ -312,7 +315,7 @@ export default function Transactions() {
             onSubmit={handleAddTransaction}
             className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl p-6 mb-8 space-y-4"
           >
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Amount
@@ -353,7 +356,7 @@ export default function Transactions() {
                 <select
                   value={formData.category}
                   onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
+                    setFormData({ ...formData, category: e.target.value, subcategory: "" })
                   }
                   className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition"
                 >
@@ -363,6 +366,21 @@ export default function Transactions() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Subcategory (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.subcategory}
+                  onChange={(e) =>
+                    setFormData({ ...formData, subcategory: e.target.value })
+                  }
+                  placeholder="e.g., Groceries, Dining Out"
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition cursor-text"
+                />
               </div>
 
               <div>
@@ -534,15 +552,45 @@ export default function Transactions() {
         <div className="mb-8">
           <div className="glow-card glow-cyan">
             <div className="flex justify-between items-center mb-6" style={{ position: "relative", zIndex: 2 }}>
-              <h2 className="text-2xl font-bold text-white">{breakdownType === "expense" ? "Expense" : "Income"} Breakdown</h2>
-              <select
-                value={breakdownType}
-                onChange={(e) => setBreakdownType(e.target.value as "expense" | "income")}
-                className="px-4 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-cyan-400 hover:bg-slate-700 focus:border-cyan-400 focus:outline-none transition"
-              >
-                <option value="expense">Expenses</option>
-                <option value="income">Income</option>
-              </select>
+              <h2 className="text-2xl font-bold text-white">
+                {selectedTypes.size === 0 ? "No Data" : selectedTypes.size === 2 ? "Income & Expenses" : selectedTypes.has("expense") ? "Expenses" : "Income"} Breakdown
+              </h2>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white transition">
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.has("expense")}
+                    onChange={(e) => {
+                      const newTypes = new Set(selectedTypes);
+                      if (e.target.checked) {
+                        newTypes.add("expense");
+                      } else {
+                        newTypes.delete("expense");
+                      }
+                      setSelectedTypes(newTypes);
+                    }}
+                    className="w-4 h-4 cursor-pointer accent-red-400"
+                  />
+                  <span>Expenses</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer text-gray-300 hover:text-white transition">
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.has("income")}
+                    onChange={(e) => {
+                      const newTypes = new Set(selectedTypes);
+                      if (e.target.checked) {
+                        newTypes.add("income");
+                      } else {
+                        newTypes.delete("income");
+                      }
+                      setSelectedTypes(newTypes);
+                    }}
+                    className="w-4 h-4 cursor-pointer accent-green-400"
+                  />
+                  <span>Income</span>
+                </label>
+              </div>
             </div>
 
             {loading ? (
@@ -576,7 +624,11 @@ export default function Transactions() {
               </div>
             ) : (
               <div className="text-center py-20" style={{ position: "relative", zIndex: 2 }}>
-                <p className="text-gray-400">No {breakdownType} data available</p>
+                <p className="text-gray-400">
+                  {selectedTypes.size === 0
+                    ? "Select at least one transaction type"
+                    : `No ${selectedTypes.size === 2 ? "income or expense" : selectedTypes.has("expense") ? "expense" : "income"} data available`}
+                </p>
               </div>
             )}
           </div>
@@ -589,9 +641,11 @@ export default function Transactions() {
           </div>
         ) : (
           <div className="bg-slate-800/30 backdrop-blur-lg border border-white/10 rounded-xl overflow-hidden">
-            {transactions.length === 0 ? (
+            {transactions.filter((t) => selectedTypes.has(t.type || "")).length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-gray-400">No transactions yet</p>
+                <p className="text-gray-400">
+                  {transactions.length === 0 ? "No transactions yet" : "No transactions match the selected types"}
+                </p>
               </div>
             ) : (
               <table className="w-full">
@@ -602,6 +656,9 @@ export default function Transactions() {
                     </th>
                     <th className="text-left px-6 py-4 font-semibold text-gray-300">
                       Category
+                    </th>
+                    <th className="text-left px-6 py-4 font-semibold text-gray-300">
+                      Subcategory
                     </th>
                     <th className="text-left px-6 py-4 font-semibold text-gray-300">
                       Type
@@ -615,7 +672,9 @@ export default function Transactions() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((t) => (
+                  {transactions
+                    .filter((t) => selectedTypes.has(t.type || ""))
+                    .map((t) => (
                     <tr
                       key={t.id}
                       className="border-b border-slate-700 hover:bg-slate-700/30 transition"
@@ -625,6 +684,9 @@ export default function Transactions() {
                       </td>
                       <td className="px-6 py-4 text-gray-300 capitalize">
                         {t.category || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-400 text-sm">
+                        {t.subcategory || "-"}
                       </td>
                       <td className="px-6 py-4">
                         <span
