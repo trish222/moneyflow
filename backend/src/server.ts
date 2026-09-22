@@ -95,6 +95,30 @@ app.post("/api/auth/register", async (req, res) => {
       },
     });
 
+    // Create default categories for new user
+    const defaultCategories = [
+      { name: "Food", icon: "🍔", subcategories: ["Groceries", "Dining Out", "Coffee"] },
+      { name: "Utilities", icon: "💡", subcategories: ["Electricity", "Water", "Internet"] },
+      { name: "Entertainment", icon: "🎬", subcategories: ["Movies", "Games", "Music"] },
+      { name: "Transportation", icon: "🚗", subcategories: ["Gas", "Public Transit", "Parking"] },
+      { name: "Salary", icon: "💰", subcategories: ["Base Salary", "Bonus"] },
+      { name: "Business", icon: "💼", subcategories: ["Freelance", "Side Income"] },
+      { name: "Other", icon: "📦", subcategories: ["Miscellaneous"] },
+    ];
+
+    for (const cat of defaultCategories) {
+      await prisma.category.create({
+        data: {
+          userId: user.id,
+          name: cat.name,
+          icon: cat.icon,
+          subcategories: {
+            create: cat.subcategories.map((sub) => ({ name: sub })),
+          },
+        },
+      });
+    }
+
     // Generate tokens
     const tokens = AuthService.generateTokens(user.id, user.email);
 

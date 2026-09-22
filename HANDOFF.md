@@ -930,39 +930,59 @@ cd frontend && npm run dev &
 - ✅ Prisma migration applied without errors
 - ✅ Database seeded with default categories and subcategories
 
-### What's Next (For Next Session - Phase 4 & Beyond)
+### Phase 5: Category Management UI (Frontend) ✅
 
-**Priority 1: Category Settings Page (Frontend)**
-- [ ] Create CategorySettings.tsx page
-- [ ] Display list of user's categories with edit/delete buttons
-- [ ] Add new category form
-- [ ] Manage subcategories per category (add/edit/delete)
-- [ ] Link from Transactions page "Manage Categories" button
-- [ ] Test CRUD operations on categories and subcategories
+**CategorySettings Page Implemented** (Commit 5003a8e)
+- ✅ View all user categories in expandable cards
+- ✅ Create new categories with name, optional icon, optional color
+- ✅ Edit category properties (name, icon, color) inline with save/cancel
+- ✅ Delete categories with confirmation dialog
+- ✅ Add subcategories to any category with simple text input
+- ✅ Edit subcategory names inline
+- ✅ Delete subcategories with confirmation
+- ✅ Expandable/collapsible category cards showing subcategories
+- ✅ "Manage Categories" button on Transactions page links to settings
+- ✅ Back button returns to Transactions page
+- ✅ Responsive layout with hover effects
 
-**Priority 2: Update Transaction Form to Use Categories API**
-- [ ] Fetch categories from /api/categories endpoint on page load
-- [ ] Replace hardcoded categories array with dynamic categories
-- [ ] Populate subcategory dropdown based on selected category
-- [ ] Make category selection required (pick from user's categories)
-- [ ] Make subcategory optional but populated from category's subcategories
+**Dynamic Categories in Transactions Form** ✅
+- ✅ Fetch categories from API on page load
+- ✅ Category dropdown populated with user's custom categories
+- ✅ Subcategory dropdown dynamically populated based on selected category
+- ✅ Shows category icons in dropdown
+- ✅ Clears subcategory when category changes
+- ✅ Default category pre-selected if available
 
-**Priority 3: Update Budget Page**
+### What's Next (For Next Session)
+
+**Priority 1: Browser E2E Testing** (NEXT SESSION)
+- [ ] Test multi-select income/expense checkboxes with real data
+- [ ] Verify chart updates when toggling between Income, Expenses, Both
+- [ ] Verify transaction log filters by selected types
+- [ ] Test category management CRUD:
+  - [ ] Create new category
+  - [ ] Rename category
+  - [ ] Delete category
+  - [ ] Add subcategory
+  - [ ] Edit subcategory
+  - [ ] Delete subcategory
+- [ ] Test transaction form with dynamic categories
+- [ ] Test subcategory dropdown population
+- [ ] Verify subcategory displays in transaction table
+- [ ] Test on mobile for responsive layout
+- [ ] Test creating transaction with category and subcategory
+
+**Priority 2: Update Budget Page** (BLOCKED - Need category API)
 - [ ] Add subcategory support to Budget form (optional)
 - [ ] Update Budget CRUD to include subcategory field
 - [ ] Filter transactions by both category AND subcategory when calculating spent
+- [ ] Display subcategory in budget transaction breakdown
 
-**Priority 4: Browser Testing**
-- [ ] Test multi-select income/expense checkboxes with real data
-- [ ] Verify chart updates when toggling between Income, Expenses, Both
-- [ ] Test transaction form with subcategory input
-- [ ] Verify subcategory displays in transaction log
-- [ ] Test category management CRUD operations
-- [ ] Test on mobile for responsive layout
-
-**Priority 5: Recurring Transactions Integration**
+**Priority 3: Recurring Transactions Integration** (NICE-TO-HAVE)
 - [ ] Update RecurringTransaction to include subcategory field
 - [ ] Update recurring transaction form to support subcategories
+- [ ] Implement manual endpoint (POST /recurring/:id/create-once)
+- [ ] Add recurring transaction UI to Transactions page
 
 ### Known Limitations
 - CategorySettings page not yet built (category management only via API)
