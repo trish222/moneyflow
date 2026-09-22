@@ -7,6 +7,7 @@ import Savings from "./pages/Savings";
 import Investments from "./pages/Investments";
 import Debt from "./pages/Debt";
 import Reports from "./pages/Reports";
+import CategorySettings from "./pages/CategorySettings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
@@ -174,6 +175,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/transactions" element={<Transactions />} />
+                  <Route path="/categories" element={<CategorySettings />} />
                   <Route path="/budgets" element={<Budgets />} />
                   <Route path="/investments" element={<Investments />} />
                   <Route path="/debt" element={<Debt />} />

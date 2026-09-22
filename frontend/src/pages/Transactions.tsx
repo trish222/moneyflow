@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { apiCall } from "../utils/api";
 
@@ -22,7 +23,16 @@ interface CategoryData {
   value: number;
 }
 
+interface Category {
+  id: number;
+  name: string;
+  icon?: string;
+  color?: string;
+  subcategories?: any[];
+}
+
 export default function Transactions() {
+  const navigate = useNavigate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +41,7 @@ export default function Transactions() {
   const [showBalanceAdjust, setShowBalanceAdjust] = useState(false);
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set(["expense"]));
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<number | null>(null);
   const [csvFile, setCSVFile] = useState<File | null>(null);
   const [csvLoading, setCSVLoading] = useState(false);
@@ -52,7 +63,21 @@ export default function Transactions() {
   useEffect(() => {
     fetchTransactions();
     fetchAccounts();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await apiCall("/categories");
+      const data = await response.json();
+      setCategories(data);
+      if (data.length > 0 && !formData.category) {
+        setFormData((prev) => ({ ...prev, category: data[0].name }));
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   useEffect(() => {
     calculateCategoryBreakdown();
@@ -215,8 +240,6 @@ export default function Transactions() {
     }
   };
 
-  const categories = ["food", "entertainment", "utilities", "salary", "business", "other"];
-
   return (
     <div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
       <style>{`
@@ -307,6 +330,12 @@ export default function Transactions() {
             >
               {showBalanceAdjust ? "Cancel" : "⚖️ Adjust Balance"}
             </button>
+            <button
+              onClick={() => navigate("/categories")}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition cursor-pointer"
+            >
+              🏷️ Manage Categories
+            </button>
           </div>
         </div>
 
@@ -361,8 +390,9 @@ export default function Transactions() {
                   className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition"
                 >
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    <option key={cat.id} value={cat.name}>
+                      {cat.icon && <span>{cat.icon} </span>}
+                      {cat.name}
                     </option>
                   ))}
                 </select>
@@ -372,15 +402,23 @@ export default function Transactions() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Subcategory (Optional)
                 </label>
-                <input
-                  type="text"
+                <select
                   value={formData.subcategory}
                   onChange={(e) =>
                     setFormData({ ...formData, subcategory: e.target.value })
                   }
-                  placeholder="e.g., Groceries, Dining Out"
-                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white placeholder-gray-500 hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition cursor-text"
-                />
+                  className="w-full px-4 py-2 bg-slate-700/40 backdrop-blur-lg border border-white/10 rounded-lg text-white cursor-pointer hover:border-purple-400/50 hover:bg-slate-600/40 focus:border-purple-400 focus:outline-none transition"
+                >
+                  <option value="">-- None --</option>
+                  {categories
+                    .find((c) => c.name === formData.category)
+                    ?.subcategories?.map((sub) => (
+                      <option key={sub.id} value={sub.name}>
+                        {sub.icon && <span>{sub.icon} </span>}
+                        {sub.name}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div>
