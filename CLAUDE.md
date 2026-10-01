@@ -6,53 +6,72 @@
 
 **MANDATORY:** Before writing any code, designing components, or fixing bugs, you MUST read and strictly adhere to:
 
-1. **`MONEYFLOW_SPEC.md`** — The authoritative technical specification
+1. **`docs/PRD.md`** — Source of truth for scope
    - Read this FIRST for any feature work
-   - All requirements, data models, API endpoints, and acceptance criteria defined here
+   - Defines v1 scope, non-goals (do not build these), binding data rules (Section 6), and acceptance checks (Section 7)
+
+2. **`docs/MONEYFLOW_SPEC.md`** — Detailed technical specification
+   - Data models, API endpoints, response formats, and design system details
+   - Where it conflicts with the PRD, follow the PRD
    - Reference specific sections in PRs/commits (e.g., "Per MONEYFLOW_SPEC.md (API Design section)...")
 
-2. **`HANDOFF.md`** — Session context and decisions
+3. **`HANDOFF.md`** — Session context and decisions
    - Quick orientation (5 min read)
    - Open questions and constraints
    - Implementation checklist
 
+### Docs & Handoff Hygiene
+
+- **`HANDOFF.md` is the only live handoff.** Update it in place at the end of every session — never create new dated handoff files (e.g., `SESSION_HANDOFF_<date>.md`).
+- **`docs/archive/` is history, not instructions.** Do not read or follow anything in it unless explicitly asked. Current truth lives in `docs/PRD.md`, `docs/MONEYFLOW_SPEC.md`, and `HANDOFF.md`.
+- **Archive when superseded.** If a doc no longer describes how the project actually works (replaced by a newer doc, or its decisions were reversed), propose moving it to `docs/archive/` and ask before moving it. Copy anything still relevant into `HANDOFF.md` or the right doc first.
+- **When `HANDOFF.md` gets long** (over ~150 lines), move completed items and resolved questions into `docs/archive/handoff-log.md` and keep `HANDOFF.md` focused on current state and next steps.
+
 ### Implementation Rules
 
-- ✅ **Before starting ANY feature:** Read the corresponding section in `MONEYFLOW_SPEC.md`
-- ✅ **All features** must match the spec's requirements, data model, and acceptance criteria exactly
+- ✅ **Before starting ANY feature:** Check its scope in `docs/PRD.md`, then read the corresponding section in `docs/MONEYFLOW_SPEC.md`
+- ✅ **All features** must pass their acceptance checks in PRD Section 7
 - ✅ **All API endpoints** must follow the spec's endpoint definitions (methods, parameters, response formats)
-- ✅ **All database changes** must align with the Prisma schema in the spec
+- ✅ **All database changes** must follow PRD Section 6 (`Decimal` for money, `argon2`, category FKs, budget `spent` never stored), then the spec's Prisma schema
 - ✅ **All components** must use the glow card system and styling rules from CLAUDE.md (Design System section)
 - ✅ **All forms & inputs** must have hover/focus states per spec requirements
-- ✅ **Testing** must cover the test scenarios defined in MONEYFLOW_SPEC.md (Testing Plan section)
-- ✅ **PRs must reference** the spec section they implement (e.g., "Implements MONEYFLOW_SPEC.md > Features > Recurring Transactions")
+- ✅ **Testing** must cover PRD Section 7 and MONEYFLOW_SPEC.md §8 (Testing Strategy)
+- ✅ **PRs must reference** the PRD check or spec section they implement (e.g., "PRD §7 > Money correctness" or "MONEYFLOW_SPEC.md > Recurring Transactions")
+- ❌ **Never build PRD non-goals** (bank sync, cron scheduler, PWA/offline, mobile, multi-user) unless explicitly asked
 
 ### If Something Conflicts with CLAUDE.md
 
-The specification documents take precedence in this order:
-1. **MONEYFLOW_SPEC.md** (MVP requirements, features, technical design)
-2. **HANDOFF.md** (session decisions, open questions)
-3. **CLAUDE.md** (existing design system, patterns, conventions)
+The documents take precedence in this order:
+
+1. **docs/PRD.md** (scope, binding data rules, acceptance checks)
+2. **docs/MONEYFLOW_SPEC.md** (technical design, API details)
+3. **HANDOFF.md** (session decisions, open questions)
+4. **CLAUDE.md** (existing design system, patterns, conventions)
+
+If you find a conflict not covered here, stop and ask.
 
 ---
 
 ## Project Overview
 
-MoneyFlow is a modern financial tracker application with a sleek dark theme, responsive design, and interactive dashboard. Built with React, TypeScript, Tailwind CSS, and Vite.
+MoneyFlow is a personal financial tracker (single owner, personally deployed) with a sleek dark theme, responsive design, and interactive dashboard. Built with React, TypeScript, Tailwind CSS, and Vite.
 
 **Tech Stack:**
+
 - Frontend: React 18 with TypeScript
 - Styling: Tailwind CSS
 - Build: Vite
 - Routing: React Router v6
 - Backend: Node.js/Express API (running on `http://localhost:3000`)
-- Database: PostgreSQL with Prisma ORM
+- Database: PostgreSQL with Prisma ORM (`Decimal` for all money fields)
+- Auth: JWT access + refresh tokens, `argon2` password hashing
 
 ---
 
 ## Ground Rules (September 2026 Session)
 
 **Visual & Layout**:
+
 - ✅ Background is **dark ombre**: `from-slate-950 via-gray-900 to-slate-950` (no purple)
 - ✅ Activity summary filters are on the **same line as welcome message** on desktop
 - ✅ **No layout shift** when changing filters - use fixed-height containers with `hidden` class instead of conditional rendering
@@ -70,18 +89,20 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
   - Uses `filter-btn` class with positioned ::before element
 
 **Database & Data**:
+
 - ✅ Run seed script on fresh setup: `npx ts-node prisma/seed.ts`
 - ✅ Default user ID is 1 - all API queries filter by this
 - ✅ Test data includes accounts, transactions, investments, debts, savings goals, budgets
 
 **Frontend Development**:
+
 - ✅ Make optional API fields nullable with `?` in TypeScript interfaces
 - ✅ Always provide fallback values for optional fields (e.g., `field || defaultValue`)
 - ✅ Use glow-card system for all containers with appropriate color classes
 - ✅ Ensure all pages show proper loading and empty states
 - ✅ **Null/Undefined Handling Pattern** (September 10, 2026):
   - For numeric fields: `(field || 0).toFixed(2)` at point of display
-  - For text fields: `field || "Unknown"` or `field || "N/A"` 
+  - For text fields: `field || "Unknown"` or `field || "N/A"`
   - For calculated fields (division): Check denominator > 0 before calculating
   - Create intermediate variables with fallbacks: `const value = apiField || 0;`
   - Never chain `.toFixed()` on potentially undefined values
@@ -97,6 +118,7 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
   - No exceptions: every click-able element must have clear hover feedback
 
 **Investment Tracking**:
+
 - ✅ Multi-account system: Brokerage, 401k, Roth IRA, Traditional IRA, HSA
 - ✅ Each investment belongs to a specific account
 - ✅ Support for creating, editing, and deleting accounts
@@ -104,6 +126,7 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - ✅ "All Accounts - Total Portfolio" view for combined metrics
 
 **Distribution Planning**:
+
 - Target downloadable formats: Desktop (Electron), Mobile (React Native or PWA)
 - Build mobile-friendly responsive web first, then wrap with Electron for desktop
 - Use PWA for easy browser installation on mobile
@@ -115,6 +138,7 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 ### Color Palette
 
 #### Primary Colors
+
 - **Background**: Gradient from slate-950 → gray-900 → slate-950 (dark ombre, no purple)
 - **Primary Accent**: Purple-400 to Purple-600
 - **Text Primary**: White (rgb(255, 255, 255))
@@ -123,6 +147,7 @@ MoneyFlow is a modern financial tracker application with a sleek dark theme, res
 - **Text Faint**: Gray-500 (rgb(107, 114, 128))
 
 #### Semantic Colors
+
 - **Success/Income**: Green-400 (rgb(74, 222, 128))
 - **Danger/Expense**: Red-400 (rgb(248, 113, 113))
 - **Warning**: Yellow-500 (rgb(236, 181, 54))
@@ -171,6 +196,7 @@ Each component type has its own gradient and glow color for visual distinction:
 ### Spacing
 
 Use Tailwind's spacing scale consistently:
+
 - **Padding**: `p-4 md:p-8` for main containers
 - **Gaps**: `gap-6` between sections, `gap-8` for major dividers
 - **Margins**: Use `mb-` and `mt-` classes (mb-2, mb-4, mb-6, mb-8)
@@ -190,13 +216,13 @@ Use Tailwind's spacing scale consistently:
 The core component used throughout the app for any card-based content. Features glassy transparent cards with vibrant bottom ombre glow, subtle colored borders, and elegant hover effects.
 
 **HTML Structure:**
+
 ```tsx
-<div className="glow-card glow-{color-type}">
-  {/* content */}
-</div>
+<div className="glow-card glow-{color-type}">{/* content */}</div>
 ```
 
 **CSS (included in each component's `<style>` tag):**
+
 ```css
 .glow-card {
   position: relative;
@@ -212,13 +238,18 @@ The core component used throughout the app for any card-based content. Features 
 
 /* Muted colored border */
 .glow-card::after {
-  content: '';
+  content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   border-radius: 1.5rem;
   padding: 1px;
   background: linear-gradient(135deg, var(--color-1), var(--color-2));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -233,17 +264,36 @@ The core component used throughout the app for any card-based content. Features 
 
 /* Bottom ombre glow + side accents + hover left-oval glow */
 .glow-card::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 100%;
   background:
-    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
-    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
-    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
-    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.3) 5%,
+      transparent 15%
+    ),
+    radial-gradient(
+      ellipse 20% 250% at 1% 115%,
+      var(--glow-color-dim) 0%,
+      transparent 25%
+    ),
+    radial-gradient(
+      ellipse 20% 250% at 99% 115%,
+      var(--glow-color-dim) 0%,
+      transparent 25%
+    ),
+    linear-gradient(
+      to top,
+      var(--glow-color) 0%,
+      var(--glow-color-dim) 20%,
+      var(--glow-color-dim) 35%,
+      transparent 70%
+    );
   z-index: 1;
   pointer-events: none;
   opacity: 0.9;
@@ -253,15 +303,40 @@ The core component used throughout the app for any card-based content. Features 
 .glow-card:hover::before {
   opacity: 1;
   background:
-    radial-gradient(ellipse 60% 120% at -10% 50%, var(--glow-color-dim) 0%, rgba(0, 0, 0, 0.3) 30%, transparent 45%),
-    linear-gradient(to top, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 5%, transparent 15%),
-    radial-gradient(ellipse 20% 250% at 1% 115%, var(--glow-color-dim) 0%, transparent 25%),
-    radial-gradient(ellipse 20% 250% at 99% 115%, var(--glow-color-dim) 0%, transparent 25%),
-    linear-gradient(to top, var(--glow-color) 0%, var(--glow-color-dim) 20%, var(--glow-color-dim) 35%, transparent 70%);
+    radial-gradient(
+      ellipse 60% 120% at -10% 50%,
+      var(--glow-color-dim) 0%,
+      rgba(0, 0, 0, 0.3) 30%,
+      transparent 45%
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.6) 0%,
+      rgba(255, 255, 255, 0.3) 5%,
+      transparent 15%
+    ),
+    radial-gradient(
+      ellipse 20% 250% at 1% 115%,
+      var(--glow-color-dim) 0%,
+      transparent 25%
+    ),
+    radial-gradient(
+      ellipse 20% 250% at 99% 115%,
+      var(--glow-color-dim) 0%,
+      transparent 25%
+    ),
+    linear-gradient(
+      to top,
+      var(--glow-color) 0%,
+      var(--glow-color-dim) 20%,
+      var(--glow-color-dim) 35%,
+      transparent 70%
+    );
 }
 ```
 
 **Glow Card Features:**
+
 - **Glassy transparent background** — `rgba(10, 15, 30, 0.3)` with 20px backdrop blur
 - **Ultra-thin border** — 0.3px subtle white border for minimal visual weight
 - **Muted border glow** — Tinted gradient borders (0.35 opacity, 0.6 on hover)
@@ -270,12 +345,28 @@ The core component used throughout the app for any card-based content. Features 
 - **Hover left-oval effect** — Darker oval glow from left side that extends to top/bottom edges
 
 **Color Class Definitions:**
+
 ```css
-.glow-red { --color-1: #ff6b6b; --color-2: #ffa94d; }
-.glow-cyan { --color-1: #00d9ff; --color-2: #0099ff; }
-.glow-purple { --color-1: #c77dff; --color-2: #ff006e; }
-.glow-green { --color-1: #00d97e; --color-2: #00a86b; }
-.glow-blue { --color-1: #00b4ff; --color-2: #0066ff; }
+.glow-red {
+  --color-1: #ff6b6b;
+  --color-2: #ffa94d;
+}
+.glow-cyan {
+  --color-1: #00d9ff;
+  --color-2: #0099ff;
+}
+.glow-purple {
+  --color-1: #c77dff;
+  --color-2: #ff006e;
+}
+.glow-green {
+  --color-1: #00d97e;
+  --color-2: #00a86b;
+}
+.glow-blue {
+  --color-1: #00b4ff;
+  --color-2: #0066ff;
+}
 ```
 
 ### Toggle Switch
@@ -290,6 +381,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **CSS:**
+
 ```css
 .toggle-switch {
   position: relative;
@@ -307,7 +399,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
   border-color: #818cf8;
 }
 .toggle-switch::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 24px;
   height: 24px;
@@ -325,6 +417,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ### Button Styles
 
 **Primary Button (CTA):**
+
 ```tsx
 <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition">
   Button Text
@@ -332,17 +425,21 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Secondary/Filter Button:**
+
 ```tsx
-<button className={`py-2 px-4 rounded-full border-2 font-medium transition ${
-  isActive
-    ? "border-purple-400 bg-purple-500/20 text-purple-300"
-    : "border-slate-600 text-gray-300 hover:border-purple-400"
-}`}>
+<button
+  className={`py-2 px-4 rounded-full border-2 font-medium transition ${
+    isActive
+      ? "border-purple-400 bg-purple-500/20 text-purple-300"
+      : "border-slate-600 text-gray-300 hover:border-purple-400"
+  }`}
+>
   Filter
 </button>
 ```
 
 **Icon Button with Hover Effect:**
+
 ```tsx
 <svg className="w-6 h-6 text-{color}-400 group-hover:translate-x-1 transition">
   {/* SVG content */}
@@ -352,6 +449,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ### Form Elements
 
 **Input Field (with Hover Effects):**
+
 ```tsx
 <input
   type="text"
@@ -361,6 +459,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Select Dropdown (with Hover Effects):**
+
 ```tsx
 <select className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-gray-300 text-sm cursor-pointer hover:border-purple-400 hover:bg-slate-700 focus:border-purple-400 focus:outline-none transition">
   <option>Option</option>
@@ -368,6 +467,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Form Container:**
+
 ```tsx
 <form className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-6 mb-8 space-y-4">
   {/* form fields */}
@@ -379,6 +479,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 **All clickable elements must provide clear visual feedback on hover:**
 
 **Button (Primary CTA):**
+
 ```tsx
 <button className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition cursor-pointer">
   Button Text
@@ -386,17 +487,21 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Button (Secondary/Filter - with Inner Glow, September 15, 2026):**
+
 ```tsx
-<button className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
-  isActive
-    ? "active border-white bg-white/10 text-white"
-    : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
-}`}>
+<button
+  className={`filter-btn py-2 px-3 rounded-full border font-medium transition text-sm cursor-pointer backdrop-blur-md relative ${
+    isActive
+      ? "active border-white bg-white/10 text-white"
+      : "border-slate-600 text-gray-300 hover:border-white hover:bg-white/10"
+  }`}
+>
   Filter
 </button>
 ```
 
 **CSS for Filter Buttons (white inner ombre glow):**
+
 ```css
 .filter-btn {
   position: relative;
@@ -405,15 +510,25 @@ Used for binary state toggles (e.g., Include Debt toggle):
 }
 
 .filter-btn::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 100%;
   background:
-    linear-gradient(to top, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 3%, transparent 10%),
-    linear-gradient(to top, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.4) 15%, transparent 50%);
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.3) 3%,
+      transparent 10%
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.7) 0%,
+      rgba(255, 255, 255, 0.4) 15%,
+      transparent 50%
+    );
   z-index: -1;
   pointer-events: none;
   opacity: 0;
@@ -430,6 +545,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Filter Button Features:**
+
 - **White borders** — Clean, minimal 1px borders
 - **Inner white ombre glow** — Matches glow card design, white gradient from bottom fading upward
 - **Active state** — White border, white/10 background, full opacity glow (0.9)
@@ -437,6 +553,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 - **Responsive** — Uses `backdrop-blur-md` for glass effect, matches card aesthetic
 
 **Text Input:**
+
 ```tsx
 <input
   type="text"
@@ -445,6 +562,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Select/Dropdown:**
+
 ```tsx
 <select className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white cursor-pointer hover:border-purple-400 hover:bg-slate-600 focus:border-purple-400 focus:outline-none transition">
   <option>Option</option>
@@ -452,20 +570,29 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 **Navigation Link:**
+
 ```tsx
-<Link to="/path" className="text-gray-300 hover:text-purple-400 font-medium transition cursor-pointer">
+<Link
+  to="/path"
+  className="text-gray-300 hover:text-purple-400 font-medium transition cursor-pointer"
+>
   Link Text
 </Link>
 ```
 
 **Icon/Delete Button:**
+
 ```tsx
-<button onClick={() => handleDelete(id)} className="text-red-400 hover:text-red-300 transition cursor-pointer">
+<button
+  onClick={() => handleDelete(id)}
+  className="text-red-400 hover:text-red-300 transition cursor-pointer"
+>
   ✕
 </button>
 ```
 
 **Hover Effect Color Scheme:**
+
 - **General Pages** (Dashboard, Transactions, Budgets, Savings): Use `hover:border-purple-400`
 - **Investments Page**: Use `hover:border-green-400`
 - **Background Highlights**: Use `hover:bg-slate-700` or `hover:bg-slate-600` depending on current background shade
@@ -475,6 +602,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ### Progress Bars
 
 **Horizontal Progress Bar:**
+
 ```tsx
 <div className="w-full bg-slate-700 rounded-full h-2">
   <div
@@ -485,6 +613,7 @@ Used for binary state toggles (e.g., Include Debt toggle):
 ```
 
 Color variations based on progress:
+
 - `bg-blue-500` - Normal
 - `bg-yellow-500` - Warning (75%+)
 - `bg-red-500` - Danger (100%+)
@@ -498,12 +627,18 @@ Color variations based on progress:
 All pages use this consistent structure with pure black background (September 15, 2026):
 
 ```tsx
-<div className="min-h-screen p-4 md:p-8" style={{background: 'linear-gradient(to bottom right, #000000, #0f0f0f, #000000)'}}>
+<div
+  className="min-h-screen p-4 md:p-8"
+  style={{
+    background: "linear-gradient(to bottom right, #000000, #0f0f0f, #000000)",
+  }}
+>
   {/* page content */}
 </div>
 ```
 
 **Background Details:**
+
 - Uses pure black (#000000) at corners with minimal grey (#0f0f0f) in center
 - Creates subtle depth without color hue (no purple/blue undertones)
 - Pairs perfectly with glassy cards and vibrant glow effects
@@ -511,6 +646,7 @@ All pages use this consistent structure with pure black background (September 15
 ### Responsive Grid
 
 **Dashboard Layout (2-column on desktop):**
+
 ```tsx
 <div className="flex flex-col lg:flex-row gap-8">
   <div className="w-full lg:w-1/4">{/* Sidebar */}</div>
@@ -519,10 +655,9 @@ All pages use this consistent structure with pure black background (September 15
 ```
 
 **Card Grid (2x2 on desktop):**
+
 ```tsx
-<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  {/* Cards */}
-</div>
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">{/* Cards */}</div>
 ```
 
 ### Breakpoints
@@ -534,6 +669,7 @@ All pages use this consistent structure with pure black background (September 15
 ### Navigation Bar
 
 **Structure:**
+
 ```tsx
 <nav className="bg-slate-900/80 backdrop-blur border-b border-purple-500/20">
   <div className="w-full px-4 md:px-8 py-4">
@@ -673,7 +809,7 @@ For cards that navigate to pages, use this pattern:
   - Make interface fields optional with `?` (except required id)
   - Provide safe fallback values at point of use
   - Never chain methods on potentially undefined values
-  - For numeric: `(field || 0).toFixed(2)` 
+  - For numeric: `(field || 0).toFixed(2)`
   - For text: `field || "Unknown"`
   - For calculations: Check denominators before division
 
@@ -706,10 +842,14 @@ useEffect(() => {
 
 ```tsx
 <div className="mb-6 flex flex-wrap gap-3 justify-end h-10">
-  <select className={`... ${filterType === "day" || filterType === "week" ? "" : "hidden"}`}>
+  <select
+    className={`... ${filterType === "day" || filterType === "week" ? "" : "hidden"}`}
+  >
     {/* Day select */}
   </select>
-  <select className={`... ${filterType === "week" || filterType === "month" ? "" : "hidden"}`}>
+  <select
+    className={`... ${filterType === "week" || filterType === "month" ? "" : "hidden"}`}
+  >
     {/* Month select */}
   </select>
   {/* more selects */}
@@ -737,12 +877,14 @@ This keeps the container height constant regardless of which dropdowns are visib
 Dashboard uses a 2-column layout for organizing metric cards and page cards:
 
 **Header with Activity Filters**:
+
 - Welcome message and subtitle on the left
 - Activity summary time filter buttons (Day/Week/Month/Year/All Time) on the right, same line on desktop
 - Responsive: stacks on mobile, horizontal on lg screens with `gap-6`
 - Filters always positioned with welcome message, no separate "Activity Summary" label
 
 **Overall Structure**:
+
 - **Left Column** (1fr): 4 metric cards stacked vertically
   - Net Worth (metric only)
   - Available Funds (metric only)
@@ -754,6 +896,7 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
   - Investments (page)
 
 **Implementation:**
+
 ```css
 .dashboard-layout {
   display: grid;
@@ -788,40 +931,41 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 ```
 
 **Responsive Implementation (Updated September 21)**:
+
 ```css
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 0.85fr 1.5fr;  /* Responsive proportions */
+  grid-template-columns: 0.85fr 1.5fr; /* Responsive proportions */
   gap: 1.5rem;
-  height: screen;  /* Fills viewport */
-  overflow-y: auto;  /* Vertical scroll only */
+  height: screen; /* Fills viewport */
+  overflow-y: auto; /* Vertical scroll only */
 }
 
 .metrics-column {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;  /* Good breathing room */
+  gap: 1.2rem; /* Good breathing room */
 }
 
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;  /* Maintained spacing */
+  gap: 1.5rem; /* Maintained spacing */
 }
 
 @media (max-width: 1280px) {
   .dashboard-layout {
-    grid-template-columns: 0.8fr 1fr;  /* Slightly adjusted */
+    grid-template-columns: 0.8fr 1fr; /* Slightly adjusted */
   }
 }
 
 @media (max-width: 1024px) {
   .dashboard-layout {
-    grid-template-columns: 1fr;  /* Stack vertically */
+    grid-template-columns: 1fr; /* Stack vertically */
   }
   .metrics-column {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);  /* 4-column metric cards */
+    grid-template-columns: repeat(4, 1fr); /* 4-column metric cards */
     gap: 0.8rem;
   }
   .cards-grid {
@@ -831,15 +975,16 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 
 @media (max-width: 768px) {
   .metrics-column {
-    grid-template-columns: repeat(2, 1fr);  /* 2-column on mobile */
+    grid-template-columns: repeat(2, 1fr); /* 2-column on mobile */
   }
   .cards-grid {
-    grid-template-columns: 1fr;  /* Single column */
+    grid-template-columns: 1fr; /* Single column */
   }
 }
 ```
 
 **Responsive Behavior**:
+
 - **Desktop (≥1280px)**: 2-column layout (metrics left 0.85fr, cards right 1.5fr) - fills screen with proper spacing
 - **Tablet (1024-1280px)**: Same layout with slightly reduced grid proportions
 - **Tablet landscape (768-1024px)**: Metrics become 4-column grid, cards stay 2-column - all content visible
@@ -859,18 +1004,21 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 ### Key Responsive Patterns
 
 **Text Sizing:**
+
 ```tsx
 <h1 className="text-3xl md:text-4xl">Responsive Heading</h1>
 <p className="text-sm md:text-base">Responsive Body</p>
 ```
 
 **Spacing:**
+
 ```tsx
 <div className="p-4 md:p-8">Responsive padding</div>
 <div className="gap-6 md:gap-8">Responsive gap</div>
 ```
 
 **Layout Stacking:**
+
 ```tsx
 <div className="flex flex-col md:flex-row gap-6">
   {/* Stacks vertically on mobile, horizontal on tablet+ */}
@@ -878,6 +1026,7 @@ Dashboard uses a 2-column layout for organizing metric cards and page cards:
 ```
 
 **Grid Columns:**
+
 ```tsx
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
   {/* 1 column mobile, 2 tablet, 3 desktop */}
@@ -980,30 +1129,37 @@ frontend/
 ## Common Issues & Solutions
 
 **Issue**: Glow effect not showing
+
 - Solution: Ensure `glow-card` and `glow-{color}` classes are both applied
 - Check that CSS variables are defined in `<style>` tag
 
 **Issue**: Text not readable on hover
+
 - Solution: Ensure text color has sufficient contrast with background
 - Use `group-hover:text-{color}` instead of changing background only
 
 **Issue**: Cards not stacking on mobile
+
 - Solution: Use `flex flex-col md:flex-row` instead of `flex flex-row`
 - Ensure gap is specified: `gap-6`
 
 **Issue**: API 404 errors
+
 - Solution: Verify backend is running on `http://localhost:3000`
 - Check endpoint path matches backend routes
 
 **Issue**: Pages show empty state even after adding data
+
 - Solution: Run database seed script: `cd backend && npx ts-node prisma/seed.ts`
 - Verify backend and frontend are both running
 
 **Issue**: Optional API fields causing TypeScript errors
+
 - Solution: Make interface fields optional with `?` (e.g., `gain?: number`)
 - Provide default values when using optional fields (e.g., `investment.gain || 0`)
 
 **Issue**: Page shows blank/white screen with "Cannot read properties of undefined" error
+
 - Solution: Check browser console for exact field causing the error
 - Make the field optional in interface: `fieldName?: type`
 - Add safe fallback at point of use: `(field || defaultValue).toFixed(2)` for numbers
@@ -1024,6 +1180,7 @@ npx ts-node prisma/seed.ts
 ```
 
 This creates:
+
 - 1 default user (userId: 1)
 - 2 sample accounts (Checking, Savings)
 - 6 sample transactions (income and expenses)
@@ -1037,6 +1194,7 @@ This creates:
 ### API Data Format
 
 When designing API endpoints, ensure:
+
 - Return fields match frontend interface definitions
 - Optional fields should be handled gracefully (with `?` in TypeScript interfaces)
 - All numeric values should be properly typed (numbers, not strings)
@@ -1047,6 +1205,7 @@ When designing API endpoints, ensure:
 ## Investment Account Management (September 10, 2026)
 
 ### Database Schema
+
 - **InvestmentAccount** table: Stores account details (name, accountType, userId)
 - **Investment** table: Now has foreign key `investmentAccountId` linking to InvestmentAccount
 - Supports account types: Brokerage, 401k, Roth IRA, Traditional IRA, HSA
@@ -1054,6 +1213,7 @@ When designing API endpoints, ensure:
 ### Backend API Endpoints
 
 **Investment Accounts:**
+
 - `GET /api/investment-accounts` - List all accounts
 - `GET /api/investment-accounts/:id` - Get account with all investments
 - `POST /api/investment-accounts` - Create new account
@@ -1063,6 +1223,7 @@ When designing API endpoints, ensure:
 - `DELETE /api/investment-accounts/:id` - Delete account (cascades to investments)
 
 **Investments (Updated):**
+
 - `POST /api/investments` - Create investment
   - Now accepts `investmentAccountId` parameter
   - If not provided, uses first available account
@@ -1071,6 +1232,7 @@ When designing API endpoints, ensure:
 ### Frontend Features
 
 **Investments Page:**
+
 - Account dropdown selector with "All Accounts - Total Portfolio" option
 - Add Account form (name + type selection)
 - Delete Account button (visible when account selected)
@@ -1083,6 +1245,7 @@ When designing API endpoints, ensure:
 - All metrics update per-account or show combined totals
 
 **Dashboard Investments Card:**
+
 - Dropdown selector for account selection
 - "All Accounts - Total Portfolio" option
 - Shows:
@@ -1096,10 +1259,12 @@ When designing API endpoints, ensure:
 **Percentage Return:** `(Total Gain / Invested Amount) * 100`
 
 Color coding:
+
 - Positive gains: Green
 - Negative gains: Red
 
 ### Migration Notes
+
 - Existing investments auto-migrated to "Default Account"
 - Seed script creates 3 sample accounts with associated investments
 - All existing data preserved during migration
