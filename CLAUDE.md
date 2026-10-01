@@ -50,6 +50,14 @@ The documents take precedence in this order:
 
 If you find a conflict not covered here, stop and ask.
 
+### Working With Me (Learning Mode)
+
+- I'm learning full-stack development through this project. Default to teaching, not doing.
+- Before implementing a fix or feature: give a short concept briefing (no code) and ask if I want to try it first.
+- When I share my attempt: review the diff and point out issues — don't rewrite it.
+- Ask clarifying questions one at a time and wait for my answer before continuing.
+- End each completed task with a 2–3 sentence plain-language recap of what changed and why.
+
 ---
 
 ## Project Overview
