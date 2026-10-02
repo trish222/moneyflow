@@ -1170,7 +1170,7 @@ moneyflow/
 **Backend dev server:**
 ```bash
 cd backend
-npm run dev          # Start with auto-reload (nodemon)
+npm run dev          # Start with file watching (tsx)
 npm test            # Run tests
 npm run test:watch  # Run tests in watch mode
 ```
