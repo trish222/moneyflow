@@ -829,6 +829,21 @@ For cards that navigate to pages, use this pattern:
 
 ---
 
+## File Comment Standards
+
+Every source file in `frontend/src/` and `backend/src/` should start with a `/** */` comment describing its purpose in 1–3 bullets. Describe **what** the file does and **why**, never specific values (timeouts, token lifetimes, limits, etc.—those belong in docs or code). Update the comment when responsibilities change.
+
+**Format:**
+```typescript
+/**
+ * FileName.ts/tsx describes what the file does.
+ * - responsibility or behavior
+ * - additional context if needed
+ */
+```
+
+---
+
 ## Interactive Features
 
 ### Filter/Date Selection
@@ -1113,24 +1128,72 @@ If adding a new feature needing a color:
 ## File Organization
 
 ```
-frontend/
-├── src/
-│   ├── pages/              # Page components
-│   │   ├── Dashboard.tsx
-│   │   ├── Transactions.tsx
-│   │   ├── Budgets.tsx
-│   │   ├── Investments.tsx
-│   │   ├── Debt.tsx
-│   │   └── Savings.tsx
-│   ├── components/         # Reusable components (future)
-│   ├── App.tsx            # Main router and nav
-│   ├── App.css            # Global styles
-│   ├── main.tsx           # Entry point
-│   └── index.css          # Global CSS
-├── public/                # Static assets
-├── vite.config.ts         # Vite configuration
-└── tsconfig.json          # TypeScript config
+moneyflow/
+├── frontend/                  # React application
+│   ├── src/
+│   │   ├── pages/             # One component per route
+│   │   ├── components/        # Reusable components (future)
+│   │   ├── App.tsx           # Main router and nav
+│   │   ├── main.tsx          # Entry point
+│   │   ├── App.css           # Global styles
+│   │   └── index.css         # Global CSS
+│   ├── public/               # Static assets
+│   └── vite.config.ts        # Vite configuration
+├── backend/                   # Express API server
+│   ├── src/
+│   │   ├── server.ts         # Express app, routes, middleware setup
+│   │   ├── services/         # Business logic (auth, data processing)
+│   │   ├── middleware/       # Express middleware (auth, error handling)
+│   │   └── utils/            # Utilities (CSV parsing, helpers)
+│   ├── prisma/
+│   │   ├── schema.prisma     # Database schema
+│   │   └── migrations/       # Database migration files
+│   ├── .env.example          # Example environment variables
+│   ├── jest.config.js        # Jest test configuration
+│   └── tsconfig.json         # TypeScript config
+├── docs/
+│   ├── PRD.md                # Product requirements (scope, rules)
+│   ├── MONEYFLOW_SPEC.md     # Technical specification
+│   ├── CSV_IMPORT_GUIDE.md   # CSV import format and validation rules
+│   └── archive/              # Historical docs
+├── .claude/
+│   └── commands/             # Custom Claude Code commands
+├── CLAUDE.md                 # Design & implementation guidelines (this file)
+├── HANDOFF.md                # Session context and decisions
+└── README.md                 # General project info
 ```
+
+---
+
+## Commands
+
+**Backend dev server:**
+```bash
+cd backend
+npm run dev          # Start with auto-reload (nodemon)
+npm test            # Run tests
+npm run test:watch  # Run tests in watch mode
+```
+
+**Database migrations (always use, never db push):**
+```bash
+cd backend
+npx prisma migrate dev --name <description>  # Create and apply migration
+npx prisma migrate reset                     # ⚠️ Deletes ALL data — dev only, ask me before running
+```
+
+**Frontend dev server:**
+```bash
+cd frontend
+npm run dev          # Start Vite dev server
+npm run build        # Type-check and build for production
+npm run lint         # Run ESLint
+npm run preview      # Preview production build
+```
+
+**Full setup:** See `README.md` for initial installation and environment configuration.
+
+**Important:** Never use `prisma db push`. Always create migrations with `prisma migrate dev --name <description>` to maintain migration history for reproducible deployments.
 
 ---
 
