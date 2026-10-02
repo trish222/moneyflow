@@ -1,8 +1,9 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { env } from "../env.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "default-secret-key";
-const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET || "default-refresh-secret";
+const JWT_SECRET = env.JWT_SECRET;
+const REFRESH_TOKEN_SECRET = env.REFRESH_TOKEN_SECRET;
 
 export interface TokenPayload {
   userId: number;

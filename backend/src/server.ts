@@ -1,18 +1,21 @@
 import express from "express";
 import type { Response } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { AuthService } from "./services/authService.js";
 import { authMiddleware, type AuthRequest } from "./middleware/auth.js";
 import { parseCSV, createOpeningBalanceTransaction } from "./utils/csvParser.js";
+import { env } from "./env.js";
 
 dotenv.config();
 
+// env.ts validates all required environment variables at import time (fail-secure)
+
 const app = express();
 const prisma = new PrismaClient();
-const DEFAULT_USER_ID = 1;
 
 // Multer config for CSV file uploads
 const upload = multer({
@@ -27,7 +30,23 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
 });
 
-app.use(cors());
+// Configure CORS: allow only frontend origin (from env.FRONTEND_URL)
+app.use(helmet());
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      if (origin === env.FRONTEND_URL) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS: Origin not allowed"));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Error handler for Prisma
@@ -48,6 +67,14 @@ app.get("/", (_req, res) => {
 // Register
 app.post("/api/auth/register", async (req, res) => {
   try {
+    // Check if registration is allowed
+    if (!env.ALLOW_REGISTRATION) {
+      return res.status(403).json({
+        error: "REGISTRATION_DISABLED",
+        message: "Registration is disabled",
+      });
+    }
+
     const { email, password, name } = req.body;
 
     if (!email || !password) {
@@ -239,7 +266,7 @@ app.get("/api/dashboard/metrics", authMiddleware, async (req: AuthRequest, res) 
     const month = req.query.month as string | undefined;
     const year = req.query.year as string | undefined;
     const day = req.query.day as string | undefined;
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
 
     let startDate: Date, endDate: Date;
 
@@ -299,7 +326,7 @@ app.get("/api/dashboard/metrics", authMiddleware, async (req: AuthRequest, res) 
 
 app.get("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const accounts = await prisma.account.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
@@ -315,7 +342,7 @@ app.get("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { name, balance, type } = req.body;
 
     if (!name || balance === undefined || !type) {
@@ -345,7 +372,7 @@ app.post("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
 
 app.put("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
     const { name, balance, type } = req.body;
 
@@ -387,7 +414,7 @@ app.put("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
 
 app.delete("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const account = await prisma.account.findUnique({ where: { id: parseInt(id) } });
@@ -420,7 +447,7 @@ app.delete("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) =>
 
 app.get("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const transactions = await prisma.transaction.findMany({
       where: { userId },
       orderBy: { date: "desc" },
@@ -436,7 +463,7 @@ app.get("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { amount, type, category, date, description, accountId } = req.body;
 
     if (!amount || !type || !category || !date) {
@@ -469,7 +496,7 @@ app.post("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
 
 app.put("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
     const { amount, type, category, date, description, accountId } = req.body;
 
@@ -513,7 +540,7 @@ app.put("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res) =
 
 app.delete("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const transaction = await prisma.transaction.findUnique({ where: { id: parseInt(id) } });
@@ -549,7 +576,7 @@ app.post(
   upload.single("file"),
   async (req: AuthRequest, res) => {
     try {
-      const userId = req.userId || DEFAULT_USER_ID;
+      const userId = req.userId;
 
       if (!req.file) {
         return res.status(400).json({
@@ -626,7 +653,7 @@ app.post(
 // PUT /api/accounts/:id/set-balance - Set opening balance
 app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const idParam = typeof req.params.id === "string" ? req.params.id : "";
     const accountId = idParam ? parseInt(idParam) : 0;
     const { balance, date } = req.body;
@@ -716,7 +743,7 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
 // Auto-detects: opening_balance (if first transaction) or reconciliation (if correcting)
 app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const idParam = typeof req.params.id === "string" ? req.params.id : "";
     const accountId = idParam ? parseInt(idParam) : 0;
     const { balance, date } = req.body;
@@ -810,7 +837,7 @@ app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequ
 // Investment Accounts
 app.get("/api/investment-accounts", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const accounts = await prisma.investmentAccount.findMany({
       where: { userId },
       include: { investments: true },
@@ -827,7 +854,7 @@ app.get("/api/investment-accounts", authMiddleware, async (req: AuthRequest, res
 
 app.post("/api/investment-accounts", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { name, accountType } = req.body;
 
     if (!name || !accountType) {
@@ -852,7 +879,7 @@ app.post("/api/investment-accounts", authMiddleware, async (req: AuthRequest, re
 
 app.put("/api/investment-accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
     const { name, accountType } = req.body;
 
@@ -888,7 +915,7 @@ app.put("/api/investment-accounts/:id", authMiddleware, async (req: AuthRequest,
 
 app.delete("/api/investment-accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const account = await prisma.investmentAccount.findUnique({ where: { id: parseInt(id) } });
@@ -920,7 +947,7 @@ app.delete("/api/investment-accounts/:id", authMiddleware, async (req: AuthReque
 // Investments
 app.get("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const investments = await prisma.investment.findMany({
       where: { userId },
       orderBy: { date: "desc" },
@@ -936,7 +963,7 @@ app.get("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { name, value, type, date, investmentAccountId } = req.body;
 
     if (!name || !value || !type || !date) {
@@ -980,7 +1007,7 @@ app.post("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
 
 app.delete("/api/investments/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const investment = await prisma.investment.findUnique({ where: { id: parseInt(id) } });
@@ -1012,7 +1039,7 @@ app.delete("/api/investments/:id", authMiddleware, async (req: AuthRequest, res)
 // Debts
 app.get("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const debts = await prisma.debt.findMany({
       where: { userId },
       orderBy: { date: "desc" },
@@ -1028,7 +1055,7 @@ app.get("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { name, amount, type, date } = req.body;
 
     if (!name || !amount || !type || !date) {
@@ -1059,7 +1086,7 @@ app.post("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
 
 app.delete("/api/debts/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const debt = await prisma.debt.findUnique({ where: { id: parseInt(id) } });
@@ -1091,7 +1118,7 @@ app.delete("/api/debts/:id", authMiddleware, async (req: AuthRequest, res) => {
 // Savings Goals
 app.get("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const goals = await prisma.savingsGoal.findMany({
       where: { userId },
       orderBy: { date: "desc" },
@@ -1107,7 +1134,7 @@ app.get("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { name, targetAmount, currentAmount, date } = req.body;
 
     if (!name || !targetAmount || !date) {
@@ -1138,7 +1165,7 @@ app.post("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => 
 
 app.delete("/api/savings-goals/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const goal = await prisma.savingsGoal.findUnique({ where: { id: parseInt(id) } });
@@ -1170,7 +1197,7 @@ app.delete("/api/savings-goals/:id", authMiddleware, async (req: AuthRequest, re
 // Budgets
 app.get("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const month = req.query.month as string | undefined;
     const year = req.query.year as string | undefined;
 
@@ -1221,7 +1248,7 @@ app.get("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { category, limit, month, year } = req.body;
 
     if (!category || !limit || !month || !year) {
@@ -1253,7 +1280,7 @@ app.post("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
 // Categories API
 app.get("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
 
     const categories = await prisma.category.findMany({
       where: { userId },
@@ -1272,7 +1299,7 @@ app.get("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
 
 app.post("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const { name, icon, color, subcategories } = req.body;
 
     if (!name) {
@@ -1312,7 +1339,7 @@ app.post("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
 
 app.put("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
     const { name, icon, color } = req.body;
 
@@ -1348,7 +1375,7 @@ app.put("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) => 
 
 app.delete("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const category = await prisma.category.findFirst({
@@ -1378,7 +1405,7 @@ app.delete("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) 
 // Subcategories API
 app.get("/api/categories/:id/subcategories", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const category = await prisma.category.findFirst({
@@ -1408,7 +1435,7 @@ app.get("/api/categories/:id/subcategories", authMiddleware, async (req: AuthReq
 
 app.post("/api/categories/:id/subcategories", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
     const { name, icon } = req.body;
 
@@ -1455,7 +1482,7 @@ app.post("/api/categories/:id/subcategories", authMiddleware, async (req: AuthRe
 
 app.put("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
     const { name, icon } = req.body;
 
@@ -1490,7 +1517,7 @@ app.put("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, res) 
 
 app.delete("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const userId = req.userId || DEFAULT_USER_ID;
+    const userId = req.userId;
     const id = String(req.params.id);
 
     const subcategory = await prisma.subcategory.findUnique({
@@ -1518,8 +1545,13 @@ app.delete("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, re
   }
 });
 
-const PORT = process.env.PORT || 3000;
+export { app, prisma };
 
-app.listen(PORT, () => {
-  console.log(`MoneyFlow API listening on port ${PORT}`);
-});
+// Only listen if this is the main module (not imported for testing)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const PORT = env.PORT || "3000";
+
+  app.listen(PORT, () => {
+    console.log(`MoneyFlow API listening on port ${PORT}`);
+  });
+}
