@@ -2069,7 +2069,7 @@ app.use((req, res, next) => {
 ### 8.1 Unit Tests (Backend)
 
 **Scope:** Auth service, validation, calculations  
-**Tool:** Jest  
+**Tool:** Vitest  
 **Coverage Target:** 80%+ for critical paths
 
 ```typescript
@@ -2098,7 +2098,7 @@ describe('AuthService', () => {
 ### 8.2 Integration Tests (Backend)
 
 **Scope:** Full API flows (register → login → create transaction)  
-**Tool:** Jest + Supertest
+**Tool:** Vitest + Supertest
 
 ```typescript
 // __tests__/transactions.integration.test.ts
