@@ -57,6 +57,7 @@ If you find a conflict not covered here, stop and ask.
 - When I share my attempt: review the diff and point out issues — don't rewrite it.
 - Ask clarifying questions one at a time and wait for my answer before continuing.
 - End each completed task with a 2–3 sentence plain-language recap of what changed and why.
+- **If a fix attempt fails twice, stop and explain the evidence and hypotheses before trying more. Never commit workarounds like globals or duplicate instances without asking.**
 
 ---
 
