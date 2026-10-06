@@ -345,10 +345,19 @@ app.post("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
     const userId = req.userId;
     const { name, balance, type } = req.body;
 
-    if (!name || balance === undefined || !type) {
+    if (!name || !type) {
       return res.status(400).json({
         error: "missing_fields",
-        message: "Name, balance, and type are required",
+        message: "Name and type are required",
+      });
+    }
+
+    // Per MONEYFLOW_SPEC.md §4.3: balance is optional and defaults to 0
+    const parsedBalance = Number(balance ?? 0);
+    if (!Number.isFinite(parsedBalance)) {
+      return res.status(400).json({
+        error: "invalid_balance",
+        message: "Balance must be a number",
       });
     }
 
@@ -356,7 +365,7 @@ app.post("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
       data: {
         userId,
         name,
-        balance: parseFloat(balance),
+        balance: parsedBalance,
         type,
       },
     });

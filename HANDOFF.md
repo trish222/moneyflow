@@ -58,9 +58,10 @@
 
 ## Next Up (Priority Order)
 
-1. **POST /api/accounts: make balance optional, default 0** (SPEC §4.3)
-   - API fix: balance field currently required; should default to 0
-   - Update test: send only name and type, expect 201
+1. ~~**POST /api/accounts: make balance optional, default 0** (SPEC §4.3)~~ — ✅ DONE
+   - Handler no longer requires `balance`; defaults to 0 via `Number(balance ?? 0)` with a `Number.isFinite` guard
+   - No test change needed — the test already sent only name and type; its 201 assertion now passes
+   - Still red on `res.body.data?.name` until item 3 (envelope) lands
 
 2. **Add GET /api/accounts/:id and GET /api/transactions/:id endpoints** (MISSING)
    - Implement with ownership checks: 404 if not the owner's resource
@@ -80,6 +81,11 @@
 5. **Add cross-user list filtering test** (COVERAGE)
    - Test: user B's GET /accounts list excludes user A's accounts
    - Verify isolation at list-level, not just by-id level
+
+6. **POST /api/accounts: enforce remaining spec validation** (SPEC §4.3)
+   - `type` must be one of ["checking", "savings", "credit_card"] — currently any string is accepted
+   - `name` max 100 chars — currently unbounded
+   - Neither is covered by a test yet; add cases alongside the implementation
 
 ---
 
@@ -114,12 +120,13 @@
 **Known API Issues Found by Tests:**
 - GET /accounts/:id — endpoint missing or returning 404
 - GET /transactions/:id — endpoint missing or returning 404
-- POST /accounts — requires balance field (should default to 0)
+- ~~POST /accounts — requires balance field (should default to 0)~~ — fixed; `type` allowlist and `name` length still unenforced
 - PUT /accounts/:id — returns raw data, not wrapped in {data, success, error} envelope
 - Rate limiting — not implemented (middleware needed)
 
 **Not Yet Done (Deferred to Next Session):**
 - Money correctness: Float→Decimal, bcrypt→argon2, Budget.spent removal, Transaction.category FK
+- Money correctness: Account create accepting a nonzero balance violates the balance invariant (PRD §6); route starting balances through the opening-balance transaction
 - E2E tests: Playwright integration
 - Production deployment: .env.production, SSL, backups
 
