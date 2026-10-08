@@ -66,3 +66,25 @@
 - All features from Sept 19-22 stable
 - User identified need for security audit before money fixes
 - Float→Decimal and auth improvements prioritized
+
+## October 4-8, 2026 - Test Harness & PRD §7 Security Checks
+
+**Vitest harness (Oct 4):**
+- ✅ Removed stale compiled `.js` from `src/` (they shadowed `.ts` during vitest ESM resolution); set `rootDir`/`outDir`, added `dist/` to `.gitignore`
+- ✅ Replaced jest with vitest; `vitest.config.ts` (fileParallelism off, globals off) + `src/setupEnv.ts` loading `.env.test` with a fail-secure `_test` DATABASE_URL guard
+- ✅ `src/__tests__/helpers/db.ts`: `resetDatabase` (truncates all pg_tables), `seedTestUser` (real hashing), `seedTestAccount`
+- ✅ `moneyflow_test` database created, migrations deployed, 11 tables
+
+**PRD §7 security checks closed (Oct 8, commit 754c16c):**
+- ✅ `POST /api/accounts` balance optional, defaults to 0 (commit 4f8f5c0, spec §4.3)
+- ✅ `GET /api/accounts/:id` and `GET /api/transactions/:id` added, scoped by `userId` → another user's id is a 404 with no payload
+- ✅ Every response moved onto the spec §4.1 envelope via `ok`/`created`/`fail` in `src/utils/response.ts`; error codes now at `error.code`
+- ✅ Failed-login rate limit in `src/middleware/rateLimit.ts`: 5 per IP per 15 min, 6th → 429 + `Retry-After`, cleared on success
+- ✅ Account `type` allowlist and `name` length (max 100) enforced on create and update
+- ✅ Frontend `apiCall` unwraps the envelope, so the ~45 existing call sites were unchanged
+- ✅ Fixed a pre-existing broken `npm run build`: tsconfig `include` scoped to `src`, node types enabled, `userId`/`userEmail` declared on `Express.Request`
+- ✅ 25 backend tests passing (was 8 of 18)
+
+**Decisions kept:** fix the API to match the spec, never weaken tests. Two test expectations changed, both citing spec §4.1 (`error.code` instead of a flat `error` string; `data: null` instead of `undefined` on errors) — and the leak assertions were strengthened to check the serialized body for the owner's data.
+
+**Mode change (Oct 8):** Learning Mode retired in favour of "Working mode: SHIP" in CLAUDE.md.
