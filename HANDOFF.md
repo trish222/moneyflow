@@ -60,7 +60,8 @@
 
 ## Remaining Work, ordered for fastest deploy
 
-1. **Money foundation (one migration).** Float → `Decimal` on all 9 money fields, drop `Budget.spent`, add `opening_balance`/`reconciliation` to `Transaction.type`. Then make every transaction write update `Account.balance` inside a single `prisma.$transaction`, and fix `adjust-balance` to emit a signed `reconciliation`. Ship with the balance-invariant assertion test PRD §7 asks for. **Do this before any new feature — it touches every write path.**
+1. **Money foundation (one migration).** ⬅️ **NEXT — not started**
+    Float → `Decimal` on all 9 money fields, drop `Budget.spent`, add `opening_balance`/`reconciliation` to `Transaction.type`. Then make every transaction write update `Account.balance` inside a single `prisma.$transaction`, and fix `adjust-balance` to emit a signed `reconciliation`. Ship with the balance-invariant assertion test PRD §7 asks for. **Do this before any new feature — it touches every write path.**
 2. **argon2** replaces bcrypt (PRD §6). Single owner, so re-hash via script; fold into step 1's migration window.
 3. **Dashboard math** per PRD §6: the four fixes above, `Date.UTC` boundaries, each liability once. Fast and highly visible.
 4. **Reports endpoints.** Implement the PRD's two (spending by category, monthly trend) and trim `Reports.tsx` to what exists, or implement all four it calls. Must-have 5.
@@ -71,6 +72,15 @@
 9. **Seed cleanup**: remove `DEFAULT_USER_ID` and the hardcoded bcrypt hash from `prisma/seed.ts` (closes the last §7 security check).
 10. **Test coverage for the ship gate**: unit tests for balance/budget/recurring math, one CRUD cycle per resource, plus the missing env-secret and helmet/CORS cases.
 11. **Playwright E2E**: log in → add account → opening balance → add transaction → dashboard reflects it.
-12. **Deploy** (needs Trish): hosting provider, domain, `.env.production`, `prisma migrate deploy`, HTTPS, automated backups + one tested restore.
+12. **Deploy** (needs a hosting decision): `.env.production`, `VITE_API_URL` for the frontend, `prisma migrate deploy`, HTTPS on the provider's subdomain, automated backups + one tested restore.
 
-**Blocked on Trish:** step 12 only — hosting provider and domain, and anything that costs money. Steps 1–11 need no decisions.
+## Open Decisions
+
+- **Hosting provider: undecided.** Leaning Render as an all-in-one (web service + managed Postgres), with Neon for the database instead if we stay on free tiers. Nothing below step 12 is blocked by this, so it can be decided late.
+- **No custom domain for v1** — the provider's subdomain over HTTPS is enough. PRD §7 only asks for an HTTPS URL.
+- Steps 1–11 need no decisions.
+
+## Minor Follow-ups
+
+- **Merge `manage-transactions` into `main` before deploying.** All of today's work is on the branch; `main` is behind.
+- **The login rate limiter is in-memory** (a process-local `Map` in `middleware/rateLimit.ts`). Fine for v1 — single owner, single instance — but it resets on restart and wouldn't be shared if the app ever runs more than one process. Also noted in [docs/BACKLOG.md](./docs/BACKLOG.md).
