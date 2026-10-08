@@ -63,7 +63,7 @@ export async function seedTestUser(opts: SeedUserOptions = {}) {
     data: {
       email,
       passwordHash,
-      name: email.split("@")[0],
+      name: email.split("@")[0] ?? email,
     },
   });
 

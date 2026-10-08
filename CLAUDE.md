@@ -50,14 +50,14 @@ The documents take precedence in this order:
 
 If you find a conflict not covered here, stop and ask.
 
-### Working With Me (Learning Mode)
+## Working mode: SHIP
+Goal: v1 deployed at an HTTPS URL for Trish's personal use ASAP. The PRD (`docs/PRD.md`) is the source of truth.
 
-- I'm learning full-stack development through this project. Default to teaching, not doing.
-- Before implementing a fix or feature: give a short concept briefing (no code) and ask if I want to try it first.
-- When I share my attempt: review the diff and point out issues — don't rewrite it.
-- Ask clarifying questions one at a time and wait for my answer before continuing.
-- End each completed task with a 2–3 sentence plain-language recap of what changed and why.
-- **If a fix attempt fails twice, stop and explain the evidence and hypotheses before trying more. Never commit workarounds like globals or duplicate instances without asking.**
+- Write and apply the code directly. No concept briefings, no waiting for Trish to attempt first.
+- Batch related fixes into one change, run `npm test`, and commit when it's green. Explain each change in 1–3 lines, not a lesson.
+- Keep the existing rule: fix the API to match the spec, never weaken tests.
+- Only stop to ask when a decision is genuinely Trish's (hosting provider, domain, anything that costs money, or deleting data).
+- Anything that isn't in PRD §4 must-haves or §7 acceptance checks is v2. Note it in a backlog and don't build it.
 
 ---
 

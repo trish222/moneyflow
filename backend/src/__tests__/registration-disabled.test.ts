@@ -39,6 +39,9 @@ describe("Registration Disabled (PRD §7 Security)", () => {
       });
 
     expect(res.status).toBe(403);
-    expect(res.body.error).toBe("REGISTRATION_DISABLED");
+    // Error code lives at error.code per the MONEYFLOW_SPEC.md §4.1 envelope
+    expect(res.body.error.code).toBe("REGISTRATION_DISABLED");
+    expect(res.body.success).toBe(false);
+    expect(res.body.data).toBeNull();
   });
 });

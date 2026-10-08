@@ -20,13 +20,15 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
+      // Backend wraps every response per MONEYFLOW_SPEC.md §4.1
+      const body = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        setError(data.message || "Login failed");
+        setError(body.error?.message || "Login failed");
         return;
       }
 
-      const data = await response.json();
+      const data = body.data;
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.user));

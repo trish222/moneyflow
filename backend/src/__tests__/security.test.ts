@@ -77,7 +77,9 @@ describe("Security: Authentication & Authorization (PRD §7)", () => {
         .get(`/api/accounts/${accountA.id}`)
         .set("Authorization", `Bearer ${userB.accessToken}`);
       expect([403, 404]).toContain(res.status);
-      expect(res.body.data).toBeUndefined(); // No data leaked on 404
+      // Error envelope carries no payload (MONEYFLOW_SPEC.md §4.1), and nothing leaks
+      expect(res.body.data).toBeNull();
+      expect(JSON.stringify(res.body)).not.toContain(accountA.name);
     });
 
     it("should return 403 or 404 on PUT user A's account with user B token", async () => {
@@ -113,7 +115,8 @@ describe("Security: Authentication & Authorization (PRD §7)", () => {
         .get(`/api/transactions/${transactionA.id}`)
         .set("Authorization", `Bearer ${userB.accessToken}`);
       expect([403, 404]).toContain(res.status);
-      expect(res.body.data).toBeUndefined();
+      expect(res.body.data).toBeNull();
+      expect(JSON.stringify(res.body)).not.toContain(transactionA.description);
     });
 
     it("should return 403 or 404 on PUT user A's transaction with user B token", async () => {
@@ -158,6 +161,51 @@ describe("Security: Authentication & Authorization (PRD §7)", () => {
         .set("Authorization", `Bearer ${userA.accessToken}`);
       expect(res.status).toBe(200);
       expect(res.body.data.id).toBe(transactionA.id);
+    });
+  });
+
+  // ============ LIST ENDPOINTS ARE SCOPED TO THE CALLER ============
+  describe("Cross-user list filtering (PRD §7)", () => {
+    let accountB: any;
+    let transactionB: any;
+
+    beforeAll(async () => {
+      accountB = await seedTestAccount(userB.user.id, { name: "User B Account" });
+      transactionB = await prisma.transaction.create({
+        data: {
+          userId: userB.user.id,
+          accountId: accountB.id,
+          amount: 42,
+          type: "expense",
+          category: "Transport",
+          description: "Bus fare",
+          date: new Date(),
+        },
+      });
+    });
+
+    it("GET /api/accounts returns only user B's accounts", async () => {
+      const res = await request(app)
+        .get("/api/accounts")
+        .set("Authorization", `Bearer ${userB.accessToken}`);
+
+      expect(res.status).toBe(200);
+      const ids = res.body.data.map((a: any) => a.id);
+      expect(ids).toContain(accountB.id);
+      expect(ids).not.toContain(accountA.id);
+      expect(res.body.data.every((a: any) => a.userId === userB.user.id)).toBe(true);
+    });
+
+    it("GET /api/transactions returns only user B's transactions", async () => {
+      const res = await request(app)
+        .get("/api/transactions")
+        .set("Authorization", `Bearer ${userB.accessToken}`);
+
+      expect(res.status).toBe(200);
+      const ids = res.body.data.map((t: any) => t.id);
+      expect(ids).toContain(transactionB.id);
+      expect(ids).not.toContain(transactionA.id);
+      expect(res.body.data.every((t: any) => t.userId === userB.user.id)).toBe(true);
     });
   });
 
@@ -219,6 +267,63 @@ describe("Security: Authentication & Authorization (PRD §7)", () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data?.name).toBe("Updated Account Name");
+    });
+  });
+
+  // ============ ACCOUNT FIELD VALIDATION (MONEYFLOW_SPEC.md §4.3) ============
+  describe("Account create validation (MONEYFLOW_SPEC.md §4.3)", () => {
+    it("rejects a type outside the allowed set", async () => {
+      const res = await request(app)
+        .post("/api/accounts")
+        .set("Authorization", `Bearer ${userA.accessToken}`)
+        .send({ name: "Crypto Wallet", type: "crypto" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+      expect(res.body.data).toBeNull();
+    });
+
+    it("accepts each allowed type", async () => {
+      for (const type of ["checking", "savings", "credit_card"]) {
+        const res = await request(app)
+          .post("/api/accounts")
+          .set("Authorization", `Bearer ${userA.accessToken}`)
+          .send({ name: `${type} account`, type });
+
+        expect(res.status).toBe(201);
+        expect(res.body.data.type).toBe(type);
+        expect(res.body.data.balance).toBe(0);
+      }
+    });
+
+    it("rejects a name longer than 100 characters", async () => {
+      const res = await request(app)
+        .post("/api/accounts")
+        .set("Authorization", `Bearer ${userA.accessToken}`)
+        .send({ name: "a".repeat(101), type: "checking" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects a blank name", async () => {
+      const res = await request(app)
+        .post("/api/accounts")
+        .set("Authorization", `Bearer ${userA.accessToken}`)
+        .send({ name: "   ", type: "checking" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects an invalid type on update", async () => {
+      const res = await request(app)
+        .put(`/api/accounts/${accountA.id}`)
+        .set("Authorization", `Bearer ${userA.accessToken}`)
+        .send({ type: "crypto" });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe("VALIDATION_ERROR");
     });
   });
 });

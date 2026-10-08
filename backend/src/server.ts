@@ -7,6 +7,12 @@ import { PrismaClient } from "@prisma/client";
 import multer from "multer";
 import { AuthService } from "./services/authService.js";
 import { authMiddleware, type AuthRequest } from "./middleware/auth.js";
+import {
+  loginRateLimit,
+  recordFailedLogin,
+  clearFailedLogins,
+} from "./middleware/rateLimit.js";
+import { ok, created, fail } from "./utils/response.js";
 import { parseCSV, createOpeningBalanceTransaction } from "./utils/csvParser.js";
 import { env } from "./env.js";
 
@@ -59,7 +65,7 @@ app.use((err: any, req: express.Request, res: Response, next: express.NextFuncti
 
 // Health check
 app.get("/", (_req, res) => {
-  res.json({ message: "MoneyFlow API is running" });
+  ok(res, { message: "MoneyFlow API is running" });
 });
 
 // ==================== AUTH ENDPOINTS ====================
@@ -69,47 +75,37 @@ app.post("/api/auth/register", async (req, res) => {
   try {
     // Check if registration is allowed
     if (!env.ALLOW_REGISTRATION) {
-      return res.status(403).json({
-        error: "REGISTRATION_DISABLED",
-        message: "Registration is disabled",
-      });
+      return fail(res, 403, "REGISTRATION_DISABLED", "Registration is disabled");
     }
 
     const { email, password, name } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Email and password are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Email and password are required");
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        error: "invalid_email",
-        message: "Invalid email format",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Invalid email format");
     }
 
     // Validate password strength
     const passwordValidation = AuthService.validatePasswordStrength(password);
     if (!passwordValidation.valid) {
-      return res.status(400).json({
-        error: "weak_password",
-        message: "Password does not meet requirements",
-        requirements: passwordValidation.errors,
-      });
+      return fail(
+        res,
+        400,
+        "VALIDATION_ERROR",
+        "Password does not meet requirements",
+        passwordValidation.errors
+      );
     }
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      return res.status(409).json({
-        error: "user_exists",
-        message: "User with this email already exists",
-      });
+      return fail(res, 409, "USER_EXISTS", "User with this email already exists");
     }
 
     // Hash password and create user
@@ -149,7 +145,7 @@ app.post("/api/auth/register", async (req, res) => {
     // Generate tokens
     const tokens = AuthService.generateTokens(user.id, user.email);
 
-    res.status(201).json({
+    created(res, {
       user: {
         id: user.id,
         email: user.email,
@@ -159,47 +155,40 @@ app.post("/api/auth/register", async (req, res) => {
     });
   } catch (error) {
     console.error("Register error:", error);
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to register user",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to register user");
   }
 });
 
 // Login
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", loginRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Email and password are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Email and password are required");
     }
 
     // Find user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return res.status(401).json({
-        error: "invalid_credentials",
-        message: "Invalid email or password",
-      });
+      recordFailedLogin(req);
+      return fail(res, 401, "INVALID_CREDENTIALS", "Invalid email or password");
     }
 
     // Verify password
     const passwordValid = await AuthService.comparePasswords(password, user.passwordHash);
     if (!passwordValid) {
-      return res.status(401).json({
-        error: "invalid_credentials",
-        message: "Invalid email or password",
-      });
+      recordFailedLogin(req);
+      return fail(res, 401, "INVALID_CREDENTIALS", "Invalid email or password");
     }
+
+    // Successful login clears this client's failed-attempt counter
+    clearFailedLogins(req);
 
     // Generate tokens
     const tokens = AuthService.generateTokens(user.id, user.email);
 
-    res.json({
+    ok(res, {
       user: {
         id: user.id,
         email: user.email,
@@ -209,10 +198,7 @@ app.post("/api/auth/login", async (req, res) => {
     });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to login",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to login");
   }
 });
 
@@ -222,40 +208,28 @@ app.post("/api/auth/refresh", async (req, res) => {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      return res.status(400).json({
-        error: "missing_token",
-        message: "Refresh token is required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Refresh token is required");
     }
 
     // Verify refresh token
     const payload = AuthService.verifyRefreshToken(refreshToken);
     if (!payload) {
-      return res.status(401).json({
-        error: "invalid_token",
-        message: "Invalid or expired refresh token",
-      });
+      return fail(res, 401, "INVALID_TOKEN", "Invalid or expired refresh token");
     }
 
     // Verify user still exists
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) {
-      return res.status(401).json({
-        error: "user_not_found",
-        message: "User no longer exists",
-      });
+      return fail(res, 401, "USER_NOT_FOUND", "User no longer exists");
     }
 
     // Generate new tokens
     const tokens = AuthService.generateTokens(user.id, user.email);
 
-    res.json(tokens);
+    ok(res, tokens);
   } catch (error) {
     console.error("Refresh error:", error);
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to refresh token",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to refresh token");
   }
 });
 
@@ -306,7 +280,7 @@ app.get("/api/dashboard/metrics", authMiddleware, async (req: AuthRequest, res) 
     const totalSavings = savingsGoals.reduce((sum, goal) => sum + (goal.currentAmount || 0), 0);
     const investmentsValue = investments.reduce((sum, inv) => sum + (inv.value || 0), 0);
 
-    res.json({
+    ok(res, {
       netWorth: Math.round(netWorth * 100) / 100,
       availableFunds: Math.round(availableFunds * 100) / 100,
       debts: Math.round(totalDebts * 100) / 100,
@@ -315,14 +289,43 @@ app.get("/api/dashboard/metrics", authMiddleware, async (req: AuthRequest, res) 
     });
   } catch (error) {
     console.error("Error fetching dashboard metrics:", error);
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch metrics",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch metrics");
   }
 });
 
 // ==================== ACCOUNT ENDPOINTS ====================
+
+// Per MONEYFLOW_SPEC.md §4.3: name is required (max 100 chars), type is a fixed set
+const ACCOUNT_TYPES = ["checking", "savings", "credit_card"];
+const ACCOUNT_NAME_MAX_LENGTH = 100;
+
+/** Returns a validation message for any supplied account field, or null when all are valid. */
+function validateAccountFields(fields: { name?: unknown; type?: unknown }): string | null {
+  const { name, type } = fields;
+
+  if (name !== undefined) {
+    if (typeof name !== "string" || name.trim().length === 0) {
+      return "Name must be a non-empty string";
+    }
+    if (name.trim().length > ACCOUNT_NAME_MAX_LENGTH) {
+      return `Name must be ${ACCOUNT_NAME_MAX_LENGTH} characters or fewer`;
+    }
+  }
+
+  if (type !== undefined) {
+    if (typeof type !== "string" || !ACCOUNT_TYPES.includes(type)) {
+      return `Type must be one of: ${ACCOUNT_TYPES.join(", ")}`;
+    }
+  }
+
+  return null;
+}
+
+/** Parses a route :id into a positive integer, or null when it isn't one. */
+function parseId(raw: unknown): number | null {
+  const id = Number(raw);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
 
 app.get("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
   try {
@@ -331,12 +334,31 @@ app.get("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
       where: { userId },
       orderBy: { createdAt: "desc" },
     });
-    res.json(accounts);
+    ok(res, accounts);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch accounts",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch accounts");
+  }
+});
+
+// Scoped by userId so another user's id is a 404, never data (PRD §7)
+app.get("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId;
+    const id = parseId(req.params.id);
+
+    if (id === null) {
+      return fail(res, 400, "VALIDATION_ERROR", "Account id must be a positive integer");
+    }
+
+    const account = await prisma.account.findFirst({ where: { id, userId } });
+
+    if (!account) {
+      return fail(res, 404, "NOT_FOUND", "Account not found");
+    }
+
+    ok(res, account);
+  } catch (error) {
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch account");
   }
 });
 
@@ -346,36 +368,32 @@ app.post("/api/accounts", authMiddleware, async (req: AuthRequest, res) => {
     const { name, balance, type } = req.body;
 
     if (!name || !type) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Name and type are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Name and type are required");
+    }
+
+    const fieldError = validateAccountFields({ name, type });
+    if (fieldError) {
+      return fail(res, 400, "VALIDATION_ERROR", fieldError);
     }
 
     // Per MONEYFLOW_SPEC.md §4.3: balance is optional and defaults to 0
     const parsedBalance = Number(balance ?? 0);
     if (!Number.isFinite(parsedBalance)) {
-      return res.status(400).json({
-        error: "invalid_balance",
-        message: "Balance must be a number",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Balance must be a number");
     }
 
     const account = await prisma.account.create({
       data: {
         userId,
-        name,
+        name: name.trim(),
         balance: parsedBalance,
         type,
       },
     });
 
-    res.status(201).json(account);
+    created(res, account);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create account",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create account");
   }
 });
 
@@ -388,22 +406,21 @@ app.put("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
     const account = await prisma.account.findUnique({ where: { id: parseInt(id) } });
 
     if (!account) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Account not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Account not found");
     }
 
     // Verify ownership
     if (account.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to update this account",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to update this account");
+    }
+
+    const fieldError = validateAccountFields({ name, type });
+    if (fieldError) {
+      return fail(res, 400, "VALIDATION_ERROR", fieldError);
     }
 
     const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
+    if (name !== undefined) updateData.name = String(name).trim();
     if (balance !== undefined) updateData.balance = parseFloat(balance);
     if (type !== undefined) updateData.type = type;
 
@@ -412,12 +429,9 @@ app.put("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) => {
       data: updateData,
     });
 
-    res.json(updated);
+    ok(res, updated);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to update account",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to update account");
   }
 });
 
@@ -429,26 +443,17 @@ app.delete("/api/accounts/:id", authMiddleware, async (req: AuthRequest, res) =>
     const account = await prisma.account.findUnique({ where: { id: parseInt(id) } });
 
     if (!account) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Account not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Account not found");
     }
 
     if (account.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to delete this account",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to delete this account");
     }
 
     await prisma.account.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Account deleted successfully" });
+    ok(res, { message: "Account deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete account",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete account");
   }
 });
 
@@ -461,12 +466,31 @@ app.get("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
       where: { userId },
       orderBy: { date: "desc" },
     });
-    res.json(transactions);
+    ok(res, transactions);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch transactions",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch transactions");
+  }
+});
+
+// Scoped by userId so another user's id is a 404, never data (PRD §7)
+app.get("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId;
+    const id = parseId(req.params.id);
+
+    if (id === null) {
+      return fail(res, 400, "VALIDATION_ERROR", "Transaction id must be a positive integer");
+    }
+
+    const transaction = await prisma.transaction.findFirst({ where: { id, userId } });
+
+    if (!transaction) {
+      return fail(res, 404, "NOT_FOUND", "Transaction not found");
+    }
+
+    ok(res, transaction);
+  } catch (error) {
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch transaction");
   }
 });
 
@@ -476,10 +500,7 @@ app.post("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
     const { amount, type, category, date, description, accountId } = req.body;
 
     if (!amount || !type || !category || !date) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Amount, type, category, and date are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Amount, type, category, and date are required");
     }
 
     const transaction = await prisma.transaction.create({
@@ -494,12 +515,9 @@ app.post("/api/transactions", authMiddleware, async (req: AuthRequest, res) => {
       },
     });
 
-    res.status(201).json(transaction);
+    created(res, transaction);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create transaction",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create transaction");
   }
 });
 
@@ -512,17 +530,11 @@ app.put("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res) =
     const transaction = await prisma.transaction.findUnique({ where: { id: parseInt(id) } });
 
     if (!transaction) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Transaction not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Transaction not found");
     }
 
     if (transaction.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to update this transaction",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to update this transaction");
     }
 
     const updateData: any = {};
@@ -538,12 +550,9 @@ app.put("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res) =
       data: updateData,
     });
 
-    res.json(updated);
+    ok(res, updated);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to update transaction",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to update transaction");
   }
 });
 
@@ -555,26 +564,17 @@ app.delete("/api/transactions/:id", authMiddleware, async (req: AuthRequest, res
     const transaction = await prisma.transaction.findUnique({ where: { id: parseInt(id) } });
 
     if (!transaction) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Transaction not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Transaction not found");
     }
 
     if (transaction.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to delete this transaction",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to delete this transaction");
     }
 
     await prisma.transaction.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Transaction deleted successfully" });
+    ok(res, { message: "Transaction deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete transaction",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete transaction");
   }
 });
 
@@ -588,18 +588,12 @@ app.post(
       const userId = req.userId;
 
       if (!req.file) {
-        return res.status(400).json({
-          error: "missing_file",
-          message: "CSV file is required",
-        });
+        return fail(res, 400, "VALIDATION_ERROR", "CSV file is required");
       }
 
       const accountId = req.body.accountId ? parseInt(req.body.accountId) : null;
       if (!accountId) {
-        return res.status(400).json({
-          error: "missing_fields",
-          message: "accountId is required",
-        });
+        return fail(res, 400, "VALIDATION_ERROR", "accountId is required");
       }
 
       // Verify account belongs to user
@@ -608,10 +602,7 @@ app.post(
       });
 
       if (!account || account.userId !== userId) {
-        return res.status(403).json({
-          error: "forbidden",
-          message: "Cannot access this account",
-        });
+        return fail(res, 403, "FORBIDDEN", "Cannot access this account");
       }
 
       // Parse CSV
@@ -619,11 +610,7 @@ app.post(
       const parseResult = parseCSV(csvContent);
 
       if (parseResult.stats.valid === 0) {
-        return res.status(400).json({
-          error: "invalid_csv",
-          message: "No valid transactions found in CSV",
-          errors: parseResult.errors,
-        });
+        return fail(res, 400, "INVALID_CSV", "No valid transactions found in CSV", parseResult.errors);
       }
 
       // Create transactions
@@ -643,7 +630,7 @@ app.post(
         createdTransactions.push(created);
       }
 
-      res.status(201).json({
+      created(res, {
         message: "Transactions imported successfully",
         imported: createdTransactions.length,
         errors: parseResult.errors,
@@ -651,10 +638,12 @@ app.post(
       });
     } catch (error) {
       console.error("CSV import error:", error);
-      res.status(500).json({
-        error: "import_error",
-        message: error instanceof Error ? error.message : "Failed to import CSV",
-      });
+      fail(
+        res,
+        500,
+        "IMPORT_ERROR",
+        error instanceof Error ? error.message : "Failed to import CSV"
+      );
     }
   }
 );
@@ -668,10 +657,7 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
     const { balance, date } = req.body;
 
     if (balance === undefined || balance === null) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Balance is required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Balance is required");
     }
 
     // Verify account belongs to user
@@ -680,18 +666,12 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
     });
 
     if (!account || account.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "Cannot access this account",
-      });
+      return fail(res, 403, "FORBIDDEN", "Cannot access this account");
     }
 
     const balanceNum = parseFloat(balance);
     if (isNaN(balanceNum)) {
-      return res.status(400).json({
-        error: "invalid_balance",
-        message: "Balance must be a valid number",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Balance must be a valid number");
     }
 
     const balanceDate = date || new Date().toISOString().split("T")[0];
@@ -707,10 +687,12 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
     });
 
     if (earlierTransactions.length > 0) {
-      return res.status(400).json({
-        error: "invalid_opening_balance_date",
-        message: `Cannot set opening balance to ${balanceDate}. There are existing transactions before this date. Use the "Adjust Balance" feature instead to correct a mid-stream balance.`,
-      });
+      return fail(
+        res,
+        400,
+        "INVALID_OPENING_BALANCE_DATE",
+        `Cannot set opening balance to ${balanceDate}. There are existing transactions before this date. Use the "Adjust Balance" feature instead to correct a mid-stream balance.`
+      );
     }
 
     // Create opening balance transaction
@@ -735,16 +717,13 @@ app.put("/api/accounts/:id/set-balance", authMiddleware, async (req: AuthRequest
       data: { balance: balanceNum },
     });
 
-    res.json({
+    ok(res, {
       message: "Opening balance set successfully",
       account: updatedAccount,
     });
   } catch (error) {
     console.error("Set balance error:", error);
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to set account balance",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to set account balance");
   }
 });
 
@@ -758,10 +737,7 @@ app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequ
     const { balance, date } = req.body;
 
     if (balance === undefined || balance === null) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Balance is required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Balance is required");
     }
 
     // Verify account belongs to user
@@ -770,18 +746,12 @@ app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequ
     });
 
     if (!account || account.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "Cannot access this account",
-      });
+      return fail(res, 403, "FORBIDDEN", "Cannot access this account");
     }
 
     const newBalance = parseFloat(balance);
     if (isNaN(newBalance)) {
-      return res.status(400).json({
-        error: "invalid_balance",
-        message: "Balance must be a valid number",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Balance must be a valid number");
     }
 
     const adjustDate = date || new Date().toISOString().split("T")[0];
@@ -825,7 +795,7 @@ app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequ
       data: { balance: newBalance },
     });
 
-    res.json({
+    ok(res, {
       message: isFirstTransaction
         ? "Opening balance set successfully"
         : "Balance adjusted successfully",
@@ -834,10 +804,7 @@ app.put("/api/accounts/:id/adjust-balance", authMiddleware, async (req: AuthRequ
     });
   } catch (error) {
     console.error("Adjust balance error:", error);
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to adjust account balance",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to adjust account balance");
   }
 });
 
@@ -852,12 +819,9 @@ app.get("/api/investment-accounts", authMiddleware, async (req: AuthRequest, res
       include: { investments: true },
       orderBy: { createdAt: "desc" },
     });
-    res.json(accounts);
+    ok(res, accounts);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch investment accounts",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch investment accounts");
   }
 });
 
@@ -867,22 +831,16 @@ app.post("/api/investment-accounts", authMiddleware, async (req: AuthRequest, re
     const { name, accountType } = req.body;
 
     if (!name || !accountType) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Name and accountType are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Name and accountType are required");
     }
 
     const account = await prisma.investmentAccount.create({
       data: { userId, name, accountType },
     });
 
-    res.status(201).json(account);
+    created(res, account);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create investment account",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create investment account");
   }
 });
 
@@ -895,17 +853,11 @@ app.put("/api/investment-accounts/:id", authMiddleware, async (req: AuthRequest,
     const account = await prisma.investmentAccount.findUnique({ where: { id: parseInt(id) } });
 
     if (!account) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Investment account not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Investment account not found");
     }
 
     if (account.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to update this account",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to update this account");
     }
 
     const updated = await prisma.investmentAccount.update({
@@ -913,12 +865,9 @@ app.put("/api/investment-accounts/:id", authMiddleware, async (req: AuthRequest,
       data: { name: name || undefined, accountType: accountType || undefined },
     });
 
-    res.json(updated);
+    ok(res, updated);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to update investment account",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to update investment account");
   }
 });
 
@@ -930,26 +879,17 @@ app.delete("/api/investment-accounts/:id", authMiddleware, async (req: AuthReque
     const account = await prisma.investmentAccount.findUnique({ where: { id: parseInt(id) } });
 
     if (!account) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Investment account not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Investment account not found");
     }
 
     if (account.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to delete this account",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to delete this account");
     }
 
     await prisma.investmentAccount.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Investment account deleted successfully" });
+    ok(res, { message: "Investment account deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete investment account",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete investment account");
   }
 });
 
@@ -961,12 +901,9 @@ app.get("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
       where: { userId },
       orderBy: { date: "desc" },
     });
-    res.json(investments);
+    ok(res, investments);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch investments",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch investments");
   }
 });
 
@@ -976,20 +913,19 @@ app.post("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
     const { name, value, type, date, investmentAccountId } = req.body;
 
     if (!name || !value || !type || !date) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Name, value, type, and date are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Name, value, type, and date are required");
     }
 
     let accountId = investmentAccountId;
     if (!accountId) {
       const account = await prisma.investmentAccount.findFirst({ where: { userId } });
       if (!account) {
-        return res.status(400).json({
-          error: "no_account",
-          message: "No investment account found. Please create one first.",
-        });
+        return fail(
+          res,
+          400,
+          "NO_INVESTMENT_ACCOUNT",
+          "No investment account found. Please create one first."
+        );
       }
       accountId = account.id;
     }
@@ -1005,12 +941,9 @@ app.post("/api/investments", authMiddleware, async (req: AuthRequest, res) => {
       },
     });
 
-    res.status(201).json(investment);
+    created(res, investment);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create investment",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create investment");
   }
 });
 
@@ -1022,26 +955,17 @@ app.delete("/api/investments/:id", authMiddleware, async (req: AuthRequest, res)
     const investment = await prisma.investment.findUnique({ where: { id: parseInt(id) } });
 
     if (!investment) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Investment not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Investment not found");
     }
 
     if (investment.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to delete this investment",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to delete this investment");
     }
 
     await prisma.investment.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Investment deleted successfully" });
+    ok(res, { message: "Investment deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete investment",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete investment");
   }
 });
 
@@ -1053,12 +977,9 @@ app.get("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
       where: { userId },
       orderBy: { date: "desc" },
     });
-    res.json(debts);
+    ok(res, debts);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch debts",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch debts");
   }
 });
 
@@ -1068,10 +989,7 @@ app.post("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
     const { name, amount, type, date } = req.body;
 
     if (!name || !amount || !type || !date) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Name, amount, type, and date are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Name, amount, type, and date are required");
     }
 
     const debt = await prisma.debt.create({
@@ -1084,12 +1002,9 @@ app.post("/api/debts", authMiddleware, async (req: AuthRequest, res) => {
       },
     });
 
-    res.status(201).json(debt);
+    created(res, debt);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create debt",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create debt");
   }
 });
 
@@ -1101,26 +1016,17 @@ app.delete("/api/debts/:id", authMiddleware, async (req: AuthRequest, res) => {
     const debt = await prisma.debt.findUnique({ where: { id: parseInt(id) } });
 
     if (!debt) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Debt not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Debt not found");
     }
 
     if (debt.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to delete this debt",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to delete this debt");
     }
 
     await prisma.debt.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Debt deleted successfully" });
+    ok(res, { message: "Debt deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete debt",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete debt");
   }
 });
 
@@ -1132,12 +1038,9 @@ app.get("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => {
       where: { userId },
       orderBy: { date: "desc" },
     });
-    res.json(goals);
+    ok(res, goals);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch savings goals",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch savings goals");
   }
 });
 
@@ -1147,10 +1050,7 @@ app.post("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => 
     const { name, targetAmount, currentAmount, date } = req.body;
 
     if (!name || !targetAmount || !date) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Name, targetAmount, and date are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Name, targetAmount, and date are required");
     }
 
     const goal = await prisma.savingsGoal.create({
@@ -1163,12 +1063,9 @@ app.post("/api/savings-goals", authMiddleware, async (req: AuthRequest, res) => 
       },
     });
 
-    res.status(201).json(goal);
+    created(res, goal);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create savings goal",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create savings goal");
   }
 });
 
@@ -1180,26 +1077,17 @@ app.delete("/api/savings-goals/:id", authMiddleware, async (req: AuthRequest, re
     const goal = await prisma.savingsGoal.findUnique({ where: { id: parseInt(id) } });
 
     if (!goal) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Savings goal not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Savings goal not found");
     }
 
     if (goal.userId !== userId) {
-      return res.status(403).json({
-        error: "forbidden",
-        message: "You do not have permission to delete this goal",
-      });
+      return fail(res, 403, "FORBIDDEN", "You do not have permission to delete this goal");
     }
 
     await prisma.savingsGoal.delete({ where: { id: parseInt(id) } });
-    res.json({ message: "Savings goal deleted successfully" });
+    ok(res, { message: "Savings goal deleted successfully" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete savings goal",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete savings goal");
   }
 });
 
@@ -1246,12 +1134,9 @@ app.get("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
       })
     );
 
-    res.json(budgetsWithSpent);
+    ok(res, budgetsWithSpent);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch budgets",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch budgets");
   }
 });
 
@@ -1261,10 +1146,7 @@ app.post("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
     const { category, limit, month, year } = req.body;
 
     if (!category || !limit || !month || !year) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Category, limit, month, and year are required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Category, limit, month, and year are required");
     }
 
     const budget = await prisma.budget.create({
@@ -1277,12 +1159,9 @@ app.post("/api/budgets", authMiddleware, async (req: AuthRequest, res) => {
       },
     });
 
-    res.status(201).json(budget);
+    created(res, budget);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create budget",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create budget");
   }
 });
 
@@ -1297,12 +1176,9 @@ app.get("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
       orderBy: { name: "asc" },
     });
 
-    res.json(categories);
+    ok(res, categories);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch categories",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch categories");
   }
 });
 
@@ -1312,10 +1188,7 @@ app.post("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
     const { name, icon, color, subcategories } = req.body;
 
     if (!name) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Category name is required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Category name is required");
     }
 
     const category = await prisma.category.create({
@@ -1331,18 +1204,12 @@ app.post("/api/categories", authMiddleware, async (req: AuthRequest, res) => {
       include: { subcategories: true },
     });
 
-    res.status(201).json(category);
+    created(res, category);
   } catch (error: any) {
     if (error.code === "P2002") {
-      return res.status(400).json({
-        error: "duplicate_category",
-        message: "Category with this name already exists",
-      });
+      return fail(res, 400, "DUPLICATE_CATEGORY", "Category with this name already exists");
     }
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create category",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create category");
   }
 });
 
@@ -1357,10 +1224,7 @@ app.put("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) => 
     });
 
     if (!category) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Category not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Category not found");
     }
 
     const updated = await prisma.category.update({
@@ -1373,12 +1237,9 @@ app.put("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) => 
       include: { subcategories: true },
     });
 
-    res.json(updated);
+    ok(res, updated);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to update category",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to update category");
   }
 });
 
@@ -1392,22 +1253,16 @@ app.delete("/api/categories/:id", authMiddleware, async (req: AuthRequest, res) 
     });
 
     if (!category) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Category not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Category not found");
     }
 
     await prisma.category.delete({
       where: { id: parseInt(id) },
     });
 
-    res.json({ message: "Category deleted" });
+    ok(res, { message: "Category deleted" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete category",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete category");
   }
 });
 
@@ -1422,10 +1277,7 @@ app.get("/api/categories/:id/subcategories", authMiddleware, async (req: AuthReq
     });
 
     if (!category) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Category not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Category not found");
     }
 
     const subcategories = await prisma.subcategory.findMany({
@@ -1433,12 +1285,9 @@ app.get("/api/categories/:id/subcategories", authMiddleware, async (req: AuthReq
       orderBy: { name: "asc" },
     });
 
-    res.json(subcategories);
+    ok(res, subcategories);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to fetch subcategories",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to fetch subcategories");
   }
 });
 
@@ -1449,10 +1298,7 @@ app.post("/api/categories/:id/subcategories", authMiddleware, async (req: AuthRe
     const { name, icon } = req.body;
 
     if (!name) {
-      return res.status(400).json({
-        error: "missing_fields",
-        message: "Subcategory name is required",
-      });
+      return fail(res, 400, "VALIDATION_ERROR", "Subcategory name is required");
     }
 
     const category = await prisma.category.findFirst({
@@ -1460,10 +1306,7 @@ app.post("/api/categories/:id/subcategories", authMiddleware, async (req: AuthRe
     });
 
     if (!category) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Category not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Category not found");
     }
 
     const subcategory = await prisma.subcategory.create({
@@ -1474,18 +1317,17 @@ app.post("/api/categories/:id/subcategories", authMiddleware, async (req: AuthRe
       },
     });
 
-    res.status(201).json(subcategory);
+    created(res, subcategory);
   } catch (error: any) {
     if (error.code === "P2002") {
-      return res.status(400).json({
-        error: "duplicate_subcategory",
-        message: "Subcategory with this name already exists in this category",
-      });
+      return fail(
+        res,
+        400,
+        "DUPLICATE_SUBCATEGORY",
+        "Subcategory with this name already exists in this category"
+      );
     }
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to create subcategory",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to create subcategory");
   }
 });
 
@@ -1501,10 +1343,7 @@ app.put("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, res) 
     });
 
     if (!subcategory || subcategory.category.userId !== userId) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Subcategory not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Subcategory not found");
     }
 
     const updated = await prisma.subcategory.update({
@@ -1515,12 +1354,9 @@ app.put("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, res) 
       },
     });
 
-    res.json(updated);
+    ok(res, updated);
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to update subcategory",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to update subcategory");
   }
 });
 
@@ -1535,22 +1371,16 @@ app.delete("/api/subcategories/:id", authMiddleware, async (req: AuthRequest, re
     });
 
     if (!subcategory || subcategory.category.userId !== userId) {
-      return res.status(404).json({
-        error: "not_found",
-        message: "Subcategory not found",
-      });
+      return fail(res, 404, "NOT_FOUND", "Subcategory not found");
     }
 
     await prisma.subcategory.delete({
       where: { id: parseInt(id) },
     });
 
-    res.json({ message: "Subcategory deleted" });
+    ok(res, { message: "Subcategory deleted" });
   } catch (error) {
-    res.status(500).json({
-      error: "internal_error",
-      message: "Failed to delete subcategory",
-    });
+    fail(res, 500, "INTERNAL_ERROR", "Failed to delete subcategory");
   }
 });
 
